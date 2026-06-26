@@ -60,7 +60,9 @@ export default function Home() {
       const response = await fetch("/api/data", { cache: "no-store" });
 
       if (!response.ok) {
-        throw new Error("Nao foi possivel carregar os dados.");
+        const data = await response.json().catch(() => null);
+        const details = data?.details ? ` ${data.details}` : "";
+        throw new Error(`Nao foi possivel carregar os dados.${details}`);
       }
 
       const data = await response.json();

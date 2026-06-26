@@ -50,17 +50,30 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   async function loadData() {
     setLoading(true);
-    const response = await fetch("/api/data", { cache: "no-store" });
-    const data = await response.json();
-    setBusinesses(data.businesses);
-    setLoading(false);
+    setLoadError("");
+
+    try {
+      const response = await fetch("/api/data", { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error("Nao foi possivel carregar os dados.");
+      }
+
+      const data = await response.json();
+      setBusinesses(data.businesses);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Erro ao carregar o app.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    loadData().catch(() => setLoading(false));
+    loadData();
   }, []);
 
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
@@ -148,6 +161,18 @@ export default function Home() {
   }
 
   if (loading) return <main className="center">Carregando TikPrompt Studio...</main>;
+
+  if (loadError) {
+    return (
+      <main className="center">
+        <h1>TikPrompt Studio</h1>
+        <p>{loadError}</p>
+        <button className="primary" onClick={loadData}>
+          Tentar novamente
+        </button>
+      </main>
+    );
+  }
 
   if (!business) {
     return (

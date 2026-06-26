@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
+  await ensureDatabaseSchema();
+
   const existing = await prisma.business.count();
 
   if (existing > 0) {

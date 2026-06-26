@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id        String    @id @default(cuid())
+  name      String
+  niche     String
+  initials  String
+  color     String
+  products  Product[]
+  prompts   Prompt[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  name       String
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  prompts    Prompt[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([businessId])
+}
+
+model Prompt {
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  category         String
+  template         String
+  tool             String?
+  duration         String?
+  tone             String?
+  cta              String?
+  thumb            String?
+  speechLines      String[] @default([])
+  lineTokenPrefix  String?
+  lineSectionTitle String?
+  lineHelp         String?
+  appendLines      Boolean  @default(false)
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  businessId       String
+  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([productId])
+  @@index([category])
+}

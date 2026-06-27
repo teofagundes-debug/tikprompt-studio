@@ -460,7 +460,7 @@ export default function Home() {
             </div>
 
             <div className="welcome-stats">
-              <h2>Totais</h2>
+              <h2>Cadastros</h2>
               <div className="welcome-stats-grid">
                 <div>
                   <strong>{businesses.length}</strong>
@@ -480,6 +480,43 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            <section className="welcome-creative" aria-label="Produção de conteúdo para redes sociais">
+              <div className="creative-phone">
+                <div className="phone-top" />
+                <div className="phone-video">
+                  <span className="play-mark">▶</span>
+                </div>
+                <strong>Prompt pronto</strong>
+                <span>copiar e produzir</span>
+              </div>
+              <div className="creative-strip" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="creative-clapper">
+                <div className="clapper-top">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <strong>Vídeo 01</strong>
+                <span>Take + fala + copy</span>
+              </div>
+              <div className="creative-socials">
+                <span className="social-logo tiktok">TikTok</span>
+                <span className="social-logo instagram">Instagram</span>
+                <span className="social-logo facebook">Facebook</span>
+                <span className="social-logo youtube">YouTube</span>
+              </div>
+              <div className="creative-caption">
+                <strong>Conteúdo em escala</strong>
+                <span>Imagem, vídeo e copy organizados para vender todos os dias.</span>
+              </div>
+            </section>
 
             <div className="welcome-grid">
               <article className="welcome-card">

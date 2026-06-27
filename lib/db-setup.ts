@@ -62,6 +62,7 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_category_idx" ON "Prompt"("category");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Prompt" ADD COLUMN IF NOT EXISTS "takeType" TEXT;`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = '1 take' WHERE "category" = 'Video' AND "takeType" IS NULL;`);
+  await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = 'varios takes' WHERE "takeType" = '3 takes';`);
 
   await prisma.$executeRawUnsafe(`
     DO $$

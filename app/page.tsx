@@ -40,7 +40,7 @@ type Business = {
 };
 
 const categories = ["Imagem", "Video", "Copy"];
-const videoTakeTypes = ["Todos", "1 take", "3 takes"];
+const videoTakeTypes = ["Todos", "1 take", "varios takes"];
 
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -546,7 +546,7 @@ export default function Home() {
                         <span className="field-label">Take</span>
                         <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
                           <option value="1 take">1 take</option>
-                          <option value="3 takes">3 takes</option>
+                          <option value="varios takes">varios takes</option>
                         </select>
                       </label>
                     )}

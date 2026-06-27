@@ -312,10 +312,10 @@ export default function Home() {
     });
     const data = await response.json();
 
-    setDraft(normalizePromptForEditor(data.prompt));
     setPromptId(data.prompt.id);
     await loadData();
-    showToast("Edicao salva");
+    closeEditor();
+    showToast("Edição salva");
   }
 
   async function duplicatePrompt(prompt: Prompt) {

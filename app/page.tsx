@@ -41,6 +41,54 @@ type Business = {
 
 const categories = ["Imagem", "Video", "Copy"];
 const videoTakeTypes = ["Todos", "1 take", "varios takes"];
+const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
+
+function extractSpeechLines(template: string) {
+  const match = speechHeaderPattern.exec(template);
+  if (!match) return [];
+
+  const sectionStart = match.index + match[0].length;
+  const rest = template.slice(sectionStart);
+  const sectionEnd = rest.search(/\n---/);
+  const body = (sectionEnd >= 0 ? rest.slice(0, sectionEnd) : rest).trim().replace(/^"+|"+$/g, "");
+
+  return body
+    .split(/\n+/)
+    .map((line) => line.trim().replace(/^"+|"+$/g, ""))
+    .filter((line) => line && line !== "---");
+}
+
+function formatSpeechSection(speechLines: string[]) {
+  const body = speechLines.length ? `"${speechLines.join("\n\n")}"` : "\"\"";
+  return `SPEECH (Portuguese BR):\n\n${body}`;
+}
+
+function syncSpeechSection(template: string, speechLines: string[]) {
+  const match = speechHeaderPattern.exec(template);
+  const speechSection = formatSpeechSection(speechLines);
+
+  if (!match) {
+    return `${template.trimEnd()}\n\n---\n\n${speechSection}`;
+  }
+
+  const sectionStart = match.index;
+  const afterHeader = match.index + match[0].length;
+  const rest = template.slice(afterHeader);
+  const nextDivider = rest.search(/\n---/);
+  const sectionEnd = nextDivider >= 0 ? afterHeader + nextDivider : template.length;
+
+  return `${template.slice(0, sectionStart)}${speechSection}${template.slice(sectionEnd)}`;
+}
+
+function normalizePromptForEditor(prompt: Prompt) {
+  if (prompt.category !== "Video" || !prompt.lineTokenPrefix) return prompt;
+
+  const speechLines = extractSpeechLines(prompt.template);
+  const onlyTokens = speechLines.length > 0 && speechLines.every((line) => /^\{[^}]+\}$/.test(line));
+  if (!speechLines.length || onlyTokens) return prompt;
+
+  return { ...prompt, speechLines };
+}
 
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -248,7 +296,7 @@ export default function Home() {
 
     await loadData();
     setPromptId(data.prompt.id);
-    setDraft(data.prompt);
+    setDraft(normalizePromptForEditor(data.prompt));
     setEditorOpen(true);
     showToast("Prompt criado");
   }
@@ -262,7 +310,7 @@ export default function Home() {
     });
     const data = await response.json();
 
-    setDraft(data.prompt);
+    setDraft(normalizePromptForEditor(data.prompt));
     setPromptId(data.prompt.id);
     await loadData();
     showToast("Edicao salva");
@@ -273,7 +321,7 @@ export default function Home() {
     const data = await response.json();
     await loadData();
     setPromptId(data.prompt.id);
-    setDraft(data.prompt);
+    setDraft(normalizePromptForEditor(data.prompt));
     setEditorOpen(true);
     showToast("Prompt duplicado");
   }
@@ -500,7 +548,7 @@ export default function Home() {
                       className="prompt-action"
                       onClick={() => {
                         setPromptId(prompt.id);
-                        setDraft(structuredClone(prompt));
+                        setDraft(normalizePromptForEditor(structuredClone(prompt)));
                         setEditorOpen(true);
                       }}
                     >
@@ -557,7 +605,14 @@ export default function Home() {
                       Prompt completo
                       <span>{draft.template.length} caracteres</span>
                     </span>
-                    <textarea value={draft.template} onChange={(event) => setDraft({ ...draft, template: event.target.value })} />
+                    <textarea
+                      value={draft.template}
+                      onChange={(event) => {
+                        const template = event.target.value;
+                        const speechLines = draft.category === "Video" ? extractSpeechLines(template) : [];
+                        setDraft({ ...draft, template, speechLines: speechLines.length ? speechLines : draft.speechLines });
+                      }}
+                    />
                   </label>
 
                   {draft.lineTokenPrefix && (
@@ -569,13 +624,17 @@ export default function Home() {
                       <textarea
                         value={draft.speechLines.join("\n\n")}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            speechLines: event.target.value
+                          {
+                            const speechLines = event.target.value
                               .split(/\n+/)
                               .map((line) => line.trim())
-                              .filter(Boolean)
-                          })
+                              .filter(Boolean);
+                            setDraft({
+                              ...draft,
+                              speechLines,
+                              template: syncSpeechSection(draft.template, speechLines)
+                            });
+                          }
                         }
                       />
                     </section>

@@ -13,7 +13,7 @@ function defaultPrompt(category: string) {
         "",
         "SPEECH (Portuguese BR):",
         "",
-        "\"{fala_1}\""
+        "\"Edite esta fala conforme o produto.\""
       ].join("\n"),
       tool: "IA de video",
       duration: "1 take",

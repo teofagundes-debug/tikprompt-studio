@@ -19,3 +19,9 @@ export async function PATCH(request: Request, { params }: Params) {
 
   return NextResponse.json({ prompt });
 }
+
+export async function DELETE(_request: Request, { params }: Params) {
+  const { id } = await params;
+  await prisma.prompt.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

@@ -47,6 +47,7 @@ export default function Home() {
   const [category, setCategory] = useState("Video");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
@@ -99,12 +100,19 @@ export default function Home() {
   }, [business, businessId, businesses, product, productId]);
 
   useEffect(() => {
-    const selected = prompts.find((prompt) => prompt.id === promptId) ?? prompts[0] ?? product?.prompts[0];
-    if (selected && selected.id !== draft?.id) {
-      setPromptId(selected.id);
-      setDraft(structuredClone(selected));
+    if (prompts.length && !prompts.some((prompt) => prompt.id === promptId)) {
+      setPromptId(prompts[0].id);
     }
-  }, [draft?.id, product?.prompts, promptId, prompts]);
+
+    if (!prompts.length) {
+      setPromptId("");
+    }
+  }, [promptId, prompts]);
+
+  function closeEditor() {
+    setEditorOpen(false);
+    setDraft(null);
+  }
 
   function showToast(message: string) {
     setToast(message);
@@ -116,34 +124,90 @@ export default function Home() {
     showToast("Prompt copiado");
   }
 
-  async function savePrompt() {
-    if (!draft) return;
-    await fetch(`/api/prompts/${draft.id}`, {
-      method: "PATCH",
+  async function createBusiness() {
+    const name = window.prompt("Nome do negocio", "Novo negocio")?.trim();
+    if (!name) return;
+
+    const niche = window.prompt("Nicho / descricao", "TikTok Shop")?.trim() || "TikTok Shop";
+    const response = await fetch("/api/businesses", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft)
+      body: JSON.stringify({ name, niche })
     });
-    showToast("Edicao salva");
+    const data = await response.json();
+
     await loadData();
+    setBusinessId(data.business.id);
+    setProductId(data.business.products[0]?.id ?? "");
+    closeEditor();
+    showToast("Negocio criado");
   }
 
-  async function duplicatePrompt() {
-    if (!draft) return;
-    const response = await fetch(`/api/prompts/${draft.id}/duplicate`, { method: "POST" });
-    const data = await response.json();
-    showToast("Prompt duplicado");
+  async function editBusiness() {
+    if (!business) return;
+    const name = window.prompt("Nome do negocio", business.name)?.trim();
+    if (!name) return;
+
+    const niche = window.prompt("Nicho / descricao", business.niche)?.trim() || business.niche;
+    await fetch(`/api/businesses/${business.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, niche })
+    });
+
     await loadData();
-    setPromptId(data.prompt.id);
-    setDraft(data.prompt);
+    showToast("Negocio atualizado");
+  }
+
+  async function deleteBusiness() {
+    if (!business) return;
+    if (!window.confirm(`Excluir o negocio "${business.name}" e todos os produtos/prompts dele?`)) return;
+
+    await fetch(`/api/businesses/${business.id}`, { method: "DELETE" });
+    setBusinessId("");
+    setProductId("");
+    closeEditor();
+    await loadData();
+    showToast("Negocio excluido");
+  }
+
+  async function createProduct() {
+    if (!business) return;
+    const name = window.prompt("Nome do produto", "Novo produto")?.trim();
+    if (!name) return;
+
+    const response = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, businessId: business.id })
+    });
+    const data = await response.json();
+
+    await loadData();
+    setProductId(data.product.id);
+    closeEditor();
+    showToast("Produto criado");
   }
 
   async function duplicateProduct() {
     if (!product) return;
     const response = await fetch(`/api/products/${product.id}/duplicate`, { method: "POST" });
     const data = await response.json();
-    showToast("Produto duplicado");
     await loadData();
     setProductId(data.product.id);
+    closeEditor();
+    showToast("Produto duplicado");
+  }
+
+  async function deleteProduct() {
+    if (!product) return;
+    if (!window.confirm(`Excluir o produto "${product.name}" e todos os prompts dele?`)) return;
+
+    await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+    setProductId("");
+    closeEditor();
+    await loadData();
+    showToast("Produto excluido");
   }
 
   async function renameProduct(name: string) {
@@ -160,6 +224,57 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name })
     });
+  }
+
+  async function createPrompt() {
+    if (!business || !product) return;
+
+    const response = await fetch("/api/prompts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: business.id, productId: product.id, category })
+    });
+    const data = await response.json();
+
+    await loadData();
+    setPromptId(data.prompt.id);
+    setDraft(data.prompt);
+    setEditorOpen(true);
+    showToast("Prompt criado");
+  }
+
+  async function savePrompt() {
+    if (!draft) return;
+    const response = await fetch(`/api/prompts/${draft.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft)
+    });
+    const data = await response.json();
+
+    setDraft(data.prompt);
+    setPromptId(data.prompt.id);
+    await loadData();
+    showToast("Edicao salva");
+  }
+
+  async function duplicatePrompt(prompt: Prompt) {
+    const response = await fetch(`/api/prompts/${prompt.id}/duplicate`, { method: "POST" });
+    const data = await response.json();
+    await loadData();
+    setPromptId(data.prompt.id);
+    setDraft(data.prompt);
+    setEditorOpen(true);
+    showToast("Prompt duplicado");
+  }
+
+  async function deletePrompt(prompt: Prompt) {
+    if (!window.confirm(`Excluir o prompt "${prompt.title}"?`)) return;
+
+    await fetch(`/api/prompts/${prompt.id}`, { method: "DELETE" });
+    if (draft?.id === prompt.id) closeEditor();
+    await loadData();
+    showToast("Prompt excluido");
   }
 
   if (loading) return <main className="center">Carregando TikPrompt Studio...</main>;
@@ -180,16 +295,21 @@ export default function Home() {
     return (
       <main className="center">
         <h1>TikPrompt Studio</h1>
-        <p>Banco vazio. Crie os dados iniciais para comecar.</p>
-        <button
-          className="primary"
-          onClick={async () => {
-            await fetch("/api/seed", { method: "POST" });
-            await loadData();
-          }}
-        >
-          Criar dados iniciais
-        </button>
+        <p>Banco vazio. Crie dados iniciais ou comece um negocio do zero.</p>
+        <div className="center-actions">
+          <button
+            className="secondary"
+            onClick={async () => {
+              await fetch("/api/seed", { method: "POST" });
+              await loadData();
+            }}
+          >
+            Criar dados iniciais
+          </button>
+          <button className="primary" onClick={createBusiness}>
+            Criar negocio
+          </button>
+        </div>
       </main>
     );
   }
@@ -214,6 +334,7 @@ export default function Home() {
               onClick={() => {
                 setBusinessId(item.id);
                 setProductId(item.products[0]?.id ?? "");
+                closeEditor();
               }}
             >
               <span className="business-avatar" style={{ background: item.color }}>
@@ -226,6 +347,13 @@ export default function Home() {
               <span className="count">{item.products.reduce((sum, current) => sum + current.prompts.length, 0)}</span>
             </button>
           ))}
+          <div className="side-actions">
+            <button onClick={createBusiness}>Criar</button>
+            <button onClick={editBusiness}>Editar</button>
+            <button className="danger-action" onClick={deleteBusiness}>
+              Excluir
+            </button>
+          </div>
         </section>
       </aside>
 
@@ -234,7 +362,7 @@ export default function Home() {
           <div>
             <h1>{business.name}</h1>
             <p>
-              {business.niche} - {product?.name} - {category}
+              {business.niche} - {product?.name ?? "sem produto"} - {category}
             </p>
           </div>
           <label className="search">
@@ -251,7 +379,10 @@ export default function Home() {
                 <button
                   className={`product-tab ${item.id === product?.id ? "active" : ""}`}
                   key={item.id}
-                  onClick={() => setProductId(item.id)}
+                  onClick={() => {
+                    setProductId(item.id);
+                    closeEditor();
+                  }}
                 >
                   {item.name}
                   <span>{item.prompts.length}</span>
@@ -261,17 +392,32 @@ export default function Home() {
           </div>
           <label className="field">
             <span className="field-label">Produto atual</span>
-            <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} />
+            <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
           </label>
-          <button className="secondary" onClick={duplicateProduct}>
-            Duplicar produto
-          </button>
+          <div className="action-row">
+            <button className="secondary" onClick={createProduct}>
+              Criar produto
+            </button>
+            <button className="secondary" onClick={duplicateProduct} disabled={!product}>
+              Duplicar
+            </button>
+            <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
+              Excluir
+            </button>
+          </div>
         </section>
 
         <section className="tabs-row">
           <div className="tabs">
             {categories.map((item) => (
-              <button className={`tab ${item === category ? "active" : ""}`} key={item} onClick={() => setCategory(item)}>
+              <button
+                className={`tab ${item === category ? "active" : ""}`}
+                key={item}
+                onClick={() => {
+                  setCategory(item);
+                  closeEditor();
+                }}
+              >
                 {item}
               </button>
             ))}
@@ -283,20 +429,22 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="workspace">
+        <section className={`workspace ${editorOpen ? "" : "library-only"}`}>
           <section className="panel">
             <div className="panel-head">
               <div>
                 <h2>Biblioteca</h2>
                 <span>
-                  {prompts.length} itens em {product?.name} / {category}
+                  {prompts.length} itens em {product?.name ?? "sem produto"} / {category}
                 </span>
               </div>
-              <button className="secondary" onClick={duplicatePrompt}>
-                Duplicar
+              <button className="secondary" onClick={createPrompt} disabled={!product}>
+                Criar prompt
               </button>
             </div>
             <div className="prompt-list">
+              {!product && <p className="empty-state">Crie um produto para salvar prompts.</p>}
+              {product && !prompts.length && <p className="empty-state">Nenhum prompt nesta categoria. Clique em Criar prompt.</p>}
               {prompts.map((prompt) => (
                 <article className={`prompt-card ${prompt.id === promptId ? "active" : ""}`} key={prompt.id}>
                   <div className="prompt-top">
@@ -322,9 +470,16 @@ export default function Home() {
                       onClick={() => {
                         setPromptId(prompt.id);
                         setDraft(structuredClone(prompt));
+                        setEditorOpen(true);
                       }}
                     >
                       Editar
+                    </button>
+                    <button className="prompt-action" onClick={() => duplicatePrompt(prompt)}>
+                      Duplicar
+                    </button>
+                    <button className="prompt-action danger" onClick={() => deletePrompt(prompt)}>
+                      Excluir
                     </button>
                   </div>
                 </article>
@@ -332,70 +487,72 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="panel editor">
-            <div className="panel-head">
-              <div>
-                <h2>{draft?.title ?? "Editor"}</h2>
-                <span>Prompt completo salvo para copiar e colar</span>
-              </div>
-              <button className="secondary" onClick={savePrompt}>
-                Salvar edicao
-              </button>
-            </div>
-
-            {draft && (
-              <div className="editor-body">
-                <div className="card-meta-grid">
-                  <label className="field">
-                    <span className="field-label">Nome do card</span>
-                    <input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
-                  </label>
-                  <label className="field">
-                    <span className="field-label">Rotulo / descricao</span>
-                    <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
-                  </label>
+          {editorOpen && (
+            <section className="panel editor">
+              <div className="panel-head">
+                <div>
+                  <h2>{draft?.title ?? "Editor"}</h2>
+                  <span>Prompt completo salvo para copiar e colar</span>
                 </div>
-
-                <label className="template-area">
-                  <span className="field-label">
-                    Prompt completo
-                    <span>{draft.template.length} caracteres</span>
-                  </span>
-                  <textarea value={draft.template} onChange={(event) => setDraft({ ...draft, template: event.target.value })} />
-                </label>
-
-                {draft.lineTokenPrefix && (
-                  <section className="speech-card">
-                    <div className="speech-card-head">
-                      <span className="speech-pill">{draft.lineSectionTitle ?? "SPEECH (Portuguese BR)"}</span>
-                      <span className="speech-hint">{draft.lineHelp ?? "Campo de edicao rapida"}</span>
-                    </div>
-                    <textarea
-                      value={draft.speechLines.join("\n\n")}
-                      onChange={(event) =>
-                        setDraft({
-                          ...draft,
-                          speechLines: event.target.value
-                            .split(/\n+/)
-                            .map((line) => line.trim())
-                            .filter(Boolean)
-                        })
-                      }
-                    />
-                  </section>
-                )}
+                <button className="secondary" onClick={savePrompt}>
+                  Salvar edicao
+                </button>
               </div>
-            )}
 
-            <div className="editor-footer">
-              <button className="ghost" onClick={() => draft && setDraft(structuredClone(product?.prompts.find((item) => item.id === draft.id) ?? draft))}>
-                Restaurar
-              </button>
-              <button className="primary" onClick={() => draft && copyPrompt(draft)}>
-                Copiar
-              </button>
-            </div>
-          </section>
+              {draft && (
+                <div className="editor-body">
+                  <div className="card-meta-grid">
+                    <label className="field">
+                      <span className="field-label">Nome do card</span>
+                      <input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Rotulo / descricao</span>
+                      <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
+                    </label>
+                  </div>
+
+                  <label className="template-area">
+                    <span className="field-label">
+                      Prompt completo
+                      <span>{draft.template.length} caracteres</span>
+                    </span>
+                    <textarea value={draft.template} onChange={(event) => setDraft({ ...draft, template: event.target.value })} />
+                  </label>
+
+                  {draft.lineTokenPrefix && (
+                    <section className="speech-card">
+                      <div className="speech-card-head">
+                        <span className="speech-pill">{draft.lineSectionTitle ?? "SPEECH (Portuguese BR)"}</span>
+                        <span className="speech-hint">{draft.lineHelp ?? "Campo de edicao rapida"}</span>
+                      </div>
+                      <textarea
+                        value={draft.speechLines.join("\n\n")}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            speechLines: event.target.value
+                              .split(/\n+/)
+                              .map((line) => line.trim())
+                              .filter(Boolean)
+                          })
+                        }
+                      />
+                    </section>
+                  )}
+                </div>
+              )}
+
+              <div className="editor-footer">
+                <button className="ghost" onClick={closeEditor}>
+                  Fechar
+                </button>
+                <button className="primary" onClick={() => draft && copyPrompt(draft)}>
+                  Copiar
+                </button>
+              </div>
+            </section>
+          )}
         </section>
       </section>
 

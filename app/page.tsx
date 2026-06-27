@@ -96,6 +96,7 @@ export default function Home() {
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Video");
   const [videoTakeType, setVideoTakeType] = useState("Todos");
+  const [view, setView] = useState<"home" | "library">("home");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -133,6 +134,14 @@ export default function Home() {
 
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
   const product = business?.products.find((item) => item.id === productId) ?? business?.products[0];
+  const totalProducts = businesses.reduce((sum, item) => sum + item.products.length, 0);
+  const totalPrompts = businesses.reduce((sum, item) => sum + item.products.reduce((productSum, current) => productSum + current.prompts.length, 0), 0);
+  const totalVideos = businesses.reduce(
+    (sum, item) =>
+      sum +
+      item.products.reduce((productSum, current) => productSum + current.prompts.filter((prompt) => prompt.category === "Video").length, 0),
+    0
+  );
 
   const prompts = useMemo(() => {
     return (
@@ -194,6 +203,7 @@ export default function Home() {
     await loadData();
     setBusinessId(data.business.id);
     setProductId(data.business.products[0]?.id ?? "");
+    setView("library");
     closeEditor();
     showToast("Negocio criado");
   }
@@ -377,13 +387,13 @@ export default function Home() {
   return (
     <main className="app">
       <aside className="sidebar">
-        <div className="brand">
+        <button className="brand" onClick={() => setView("home")}>
           <div className="mark">TP</div>
           <div>
             <strong>TikPrompt Studio</strong>
             <span>Biblioteca de prompts</span>
           </div>
-        </div>
+        </button>
 
         <section className="side-section">
           <div className="side-title">Negocios</div>
@@ -394,6 +404,7 @@ export default function Home() {
               onClick={() => {
                 setBusinessId(item.id);
                 setProductId(item.products[0]?.id ?? "");
+                setView("library");
                 closeEditor();
               }}
             >
@@ -418,6 +429,66 @@ export default function Home() {
       </aside>
 
       <section className="main">
+        {view === "home" ? (
+          <section className="welcome-screen">
+            <div className="welcome-hero">
+              <span className="welcome-kicker">Bem-vindo</span>
+              <h1>TikPrompt Studio</h1>
+              <p>Organize prompts por negocio e produto, copie com velocidade e mantenha suas variacoes de imagem, video e copy prontas para producao.</p>
+              <div className="welcome-actions">
+                <button className="primary" onClick={() => setView("library")}>
+                  Abrir biblioteca
+                </button>
+                <button className="secondary" onClick={createBusiness}>
+                  Criar negocio
+                </button>
+              </div>
+            </div>
+
+            <div className="welcome-stats">
+              <div>
+                <strong>{businesses.length}</strong>
+                <span>negocios</span>
+              </div>
+              <div>
+                <strong>{totalProducts}</strong>
+                <span>produtos</span>
+              </div>
+              <div>
+                <strong>{totalPrompts}</strong>
+                <span>prompts</span>
+              </div>
+              <div>
+                <strong>{totalVideos}</strong>
+                <span>videos</span>
+              </div>
+            </div>
+
+            <div className="welcome-grid">
+              <article className="welcome-card">
+                <span>01</span>
+                <h2>Biblioteca por produto</h2>
+                <p>Separe prompts por negocio, produto e categoria para encontrar o que precisa sem procurar em arquivos soltos.</p>
+              </article>
+              <article className="welcome-card">
+                <span>02</span>
+                <h2>Copiar rapido</h2>
+                <p>Use os cards compactos e o destaque do ultimo prompt copiado para manter o ritmo na producao.</p>
+              </article>
+              <article className="welcome-card">
+                <span>03</span>
+                <h2>Videos com take</h2>
+                <p>Organize videos em 1 take ou varios takes, com campo de fala separado para editar em poucos segundos.</p>
+              </article>
+              <article className="welcome-card">
+                <span>04</span>
+                <h2>Duplicar e adaptar</h2>
+                <p>Duplique produtos ou prompts modelo e adapte apenas o que muda para cada nova campanha.</p>
+              </article>
+            </div>
+          </section>
+        ) : (
+          <>
         <header className="topbar">
           <div>
             <h1>{business.name}</h1>
@@ -657,6 +728,8 @@ export default function Home() {
             </section>
           )}
         </section>
+          </>
+        )}
       </section>
 
       <div className={`toast ${toast ? "show" : ""}`}>{toast}</div>

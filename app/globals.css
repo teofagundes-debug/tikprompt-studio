@@ -70,11 +70,16 @@ input:disabled {
 }
 
 .brand {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 6px 8px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
 }
 
 .mark {
@@ -229,6 +234,132 @@ input:disabled {
   min-width: 0;
   width: 100%;
   background: transparent;
+}
+
+.welcome-screen {
+  min-height: 100vh;
+  padding: 34px 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.55fr);
+  grid-template-areas:
+    "hero stats"
+    "cards cards";
+  align-content: start;
+  gap: 18px;
+}
+
+.welcome-hero,
+.welcome-stats,
+.welcome-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.welcome-hero {
+  grid-area: hero;
+  min-height: 260px;
+  padding: 32px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.welcome-kicker {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--teal-2);
+  color: #075f57;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.welcome-hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1;
+}
+
+.welcome-hero p {
+  margin: 0;
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.welcome-stats {
+  grid-area: stats;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.welcome-stats div {
+  border-radius: var(--radius);
+  background: #f7faf9;
+  border: 1px solid var(--line);
+  padding: 16px;
+  display: grid;
+  gap: 4px;
+}
+
+.welcome-stats strong {
+  font-size: 28px;
+}
+
+.welcome-stats span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.welcome-grid {
+  grid-area: cards;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.welcome-card {
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.welcome-card span {
+  width: 32px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #111413;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.welcome-card h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.welcome-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .product-row,
@@ -678,6 +809,26 @@ textarea {
 
   .search {
     width: 100%;
+  }
+
+  .welcome-screen {
+    min-height: auto;
+    padding: 18px 14px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "hero"
+      "stats"
+      "cards";
+  }
+
+  .welcome-hero {
+    min-height: 0;
+    padding: 22px;
+  }
+
+  .welcome-stats,
+  .welcome-grid {
+    grid-template-columns: 1fr;
   }
 
   .card-meta-grid {

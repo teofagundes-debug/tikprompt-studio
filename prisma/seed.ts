@@ -91,6 +91,7 @@ async function main() {
           "FINAL RULE:",
           "The hanging dress and the worn dress must remain visually identical throughout the entire video."
         ].join("\n"),
+        takeType: "1 take",
         speechLines: [
           "Meninas, olha esse modelo que acabou de chegar.",
           "Eu gostei muito do caimento dele.",

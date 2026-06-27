@@ -39,6 +39,7 @@ model Prompt {
   template         String
   tool             String?
   duration         String?
+  takeType         String?
   tone             String?
   cta              String?
   thumb            String?

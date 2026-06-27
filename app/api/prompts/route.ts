@@ -16,7 +16,7 @@ function defaultPrompt(category: string) {
         "\"{fala_1}\""
       ].join("\n"),
       tool: "IA de video",
-      duration: "8s",
+      duration: "1 take",
       speechLines: ["Edite esta fala conforme o produto."],
       lineTokenPrefix: "fala_",
       lineSectionTitle: "SPEECH (Portuguese BR)",
@@ -54,6 +54,7 @@ function defaultPrompt(category: string) {
 export async function POST(request: Request) {
   const body = await request.json();
   const category = String(body.category ?? "Video");
+  const takeType = category === "Video" ? String(body.takeType ?? "1 take") : null;
   const productId = String(body.productId ?? "");
   const businessId = String(body.businessId ?? "");
   const defaults = defaultPrompt(category);
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
       template: defaults.template,
       tool: defaults.tool,
       duration: defaults.duration,
+      takeType,
       tone: "Natural",
       cta: "Copiar prompt",
       thumb: "linear-gradient(135deg, #f5c84c, #f06449 52%, #0b8f83)",

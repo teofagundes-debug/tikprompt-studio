@@ -5,6 +5,7 @@ export type PromptLike = {
   template: string;
   tool: string | null;
   duration: string | null;
+  takeType?: string | null;
   lineTokenPrefix: string | null;
   speechLines: string[];
 };
@@ -26,6 +27,7 @@ export function getPromptChips(prompt: PromptLike) {
   const chips = [prompt.category];
 
   if (prompt.tool) chips.push(prompt.tool);
+  if (prompt.takeType) chips.push(prompt.takeType);
   if (prompt.duration && prompt.duration !== "-") chips.push(prompt.duration);
   if (prompt.lineTokenPrefix || text.includes("speech")) chips.push("fala");
   if (text.includes("9:16")) chips.push("9:16");

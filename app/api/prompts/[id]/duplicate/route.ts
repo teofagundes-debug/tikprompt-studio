@@ -17,6 +17,7 @@ export async function POST(_request: Request, { params }: Params) {
       template: prompt.template,
       tool: prompt.tool,
       duration: prompt.duration,
+      takeType: prompt.takeType,
       tone: prompt.tone,
       cta: prompt.cta,
       thumb: prompt.thumb,

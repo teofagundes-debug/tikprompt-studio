@@ -39,6 +39,7 @@ export async function ensureDatabaseSchema() {
       "template" TEXT NOT NULL,
       "tool" TEXT,
       "duration" TEXT,
+      "takeType" TEXT,
       "tone" TEXT,
       "cta" TEXT,
       "thumb" TEXT,
@@ -59,6 +60,8 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_businessId_idx" ON "Prompt"("businessId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_productId_idx" ON "Prompt"("productId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_category_idx" ON "Prompt"("category");`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Prompt" ADD COLUMN IF NOT EXISTS "takeType" TEXT;`);
+  await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = '1 take' WHERE "category" = 'Video' AND "takeType" IS NULL;`);
 
   await prisma.$executeRawUnsafe(`
     DO $$

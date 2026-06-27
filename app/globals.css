@@ -24,7 +24,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -243,6 +244,14 @@ input:disabled {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.subtabs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px 0;
+  flex-wrap: wrap;
+}
+
 .product-tabs,
 .tabs,
 .metrics,
@@ -307,6 +316,36 @@ input:disabled {
   background: transparent;
   padding: 0 13px;
   color: #4d5752;
+}
+
+.subtabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.subtab {
+  min-height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #4d5752;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.subtab.active {
+  background: var(--dark);
+  color: #fff;
+}
+
+.subtabs-note {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .primary {
@@ -504,6 +543,7 @@ input:disabled {
 }
 
 .field input,
+.field select,
 textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -511,7 +551,8 @@ textarea {
   color: var(--ink);
 }
 
-.field input {
+.field input,
+.field select {
   height: 40px;
   padding: 0 10px;
 }

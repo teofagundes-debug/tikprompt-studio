@@ -11,6 +11,7 @@ type Prompt = {
   template: string;
   tool: string | null;
   duration: string | null;
+  takeType: string | null;
   tone: string | null;
   cta: string | null;
   thumb: string | null;
@@ -39,12 +40,14 @@ type Business = {
 };
 
 const categories = ["Imagem", "Video", "Copy"];
+const videoTakeTypes = ["Todos", "1 take", "3 takes"];
 
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessId, setBusinessId] = useState("");
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Video");
+  const [videoTakeType, setVideoTakeType] = useState("Todos");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -86,10 +89,12 @@ export default function Home() {
     return (
       product?.prompts.filter((prompt) => {
         const haystack = `${prompt.title} ${prompt.description} ${getPromptChips(prompt).join(" ")} ${prompt.template}`.toLowerCase();
-        return prompt.category === category && haystack.includes(search.toLowerCase());
+        const matchesCategory = prompt.category === category;
+        const matchesTake = category !== "Video" || videoTakeType === "Todos" || (prompt.takeType ?? "1 take") === videoTakeType;
+        return matchesCategory && matchesTake && haystack.includes(search.toLowerCase());
       }) ?? []
     );
-  }, [product, category, search]);
+  }, [product, category, videoTakeType, search]);
 
   useEffect(() => {
     if (!business && businesses.length) setBusinessId(businesses[0].id);
@@ -232,7 +237,12 @@ export default function Home() {
     const response = await fetch("/api/prompts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessId: business.id, productId: product.id, category })
+      body: JSON.stringify({
+        businessId: business.id,
+        productId: product.id,
+        category,
+        takeType: category === "Video" && videoTakeType !== "Todos" ? videoTakeType : "1 take"
+      })
     });
     const data = await response.json();
 
@@ -415,6 +425,7 @@ export default function Home() {
                 key={item}
                 onClick={() => {
                   setCategory(item);
+                  if (item !== "Video") setVideoTakeType("Todos");
                   closeEditor();
                 }}
               >
@@ -428,6 +439,26 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {category === "Video" && (
+          <section className="subtabs-row">
+            <div className="subtabs">
+              {videoTakeTypes.map((item) => (
+                <button
+                  className={`subtab ${item === videoTakeType ? "active" : ""}`}
+                  key={item}
+                  onClick={() => {
+                    setVideoTakeType(item);
+                    closeEditor();
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+            <span className="subtabs-note">Separe versoes do mesmo produto por take e salve as copys como cards.</span>
+          </section>
+        )}
 
         <section className={`workspace ${editorOpen ? "" : "library-only"}`}>
           <section className="panel">
@@ -510,6 +541,15 @@ export default function Home() {
                       <span className="field-label">Rotulo / descricao</span>
                       <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
                     </label>
+                    {draft.category === "Video" && (
+                      <label className="field">
+                        <span className="field-label">Take</span>
+                        <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
+                          <option value="1 take">1 take</option>
+                          <option value="3 takes">3 takes</option>
+                        </select>
+                      </label>
+                    )}
                   </div>
 
                   <label className="template-area">

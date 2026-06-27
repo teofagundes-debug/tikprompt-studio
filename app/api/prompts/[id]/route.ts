@@ -13,6 +13,7 @@ export async function PATCH(request: Request, { params }: Params) {
       title: body.title,
       description: body.description,
       template: body.template,
+      takeType: body.category === "Video" ? body.takeType ?? "1 take" : null,
       speechLines: body.speechLines ?? []
     }
   });

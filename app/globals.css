@@ -238,20 +238,23 @@ input:disabled {
 
 .welcome-screen {
   min-height: 100vh;
-  padding: 34px 32px;
+  padding: 28px 30px;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.55fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.55fr);
   grid-template-areas:
     "hero stats"
     "cards cards";
   align-content: start;
-  gap: 18px;
+  gap: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 208, 99, 0.18), transparent 34%),
+    linear-gradient(225deg, rgba(11, 143, 131, 0.15), transparent 38%),
+    linear-gradient(180deg, #fffdf8 0%, #f2faf8 100%);
 }
 
 .welcome-hero,
 .welcome-stats,
 .welcome-card {
-  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -259,21 +262,28 @@ input:disabled {
 
 .welcome-hero {
   grid-area: hero;
-  min-height: 260px;
-  padding: 32px;
+  min-height: 330px;
+  padding: 34px;
   display: grid;
   align-content: center;
   gap: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 205, 85, 0.95), rgba(255, 123, 93, 0.88) 48%, rgba(11, 143, 131, 0.9)),
+    #ffce62;
+  border-color: rgba(17, 20, 19, 0.14);
+  color: #121411;
+  overflow: hidden;
 }
 
 .welcome-kicker {
   width: fit-content;
   border-radius: 999px;
-  background: var(--teal-2);
-  color: #075f57;
+  background: rgba(255, 255, 255, 0.74);
+  color: #163530;
   padding: 6px 10px;
   font-size: 12px;
   font-weight: 900;
+  border: 1px solid rgba(255, 255, 255, 0.65);
 }
 
 .welcome-hero h1 {
@@ -285,9 +295,33 @@ input:disabled {
 .welcome-hero p {
   margin: 0;
   max-width: 720px;
-  color: var(--muted);
+  color: rgba(18, 20, 17, 0.78);
   font-size: 16px;
   line-height: 1.55;
+}
+
+.welcome-audience {
+  max-width: 780px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 12px 14px;
+}
+
+.welcome-audience strong {
+  color: #073f39;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.welcome-audience span {
+  color: rgba(18, 20, 17, 0.78);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .welcome-actions {
@@ -299,23 +333,38 @@ input:disabled {
 
 .welcome-stats {
   grid-area: stats;
-  padding: 18px;
+  padding: 20px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.welcome-stats h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.welcome-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.welcome-stats div {
+.welcome-stats-grid div {
   border-radius: var(--radius);
-  background: #f7faf9;
+  background: linear-gradient(180deg, #f7fbfa 0%, #ffffff 100%);
   border: 1px solid var(--line);
-  padding: 16px;
+  padding: 20px 12px;
   display: grid;
+  justify-items: center;
   gap: 4px;
 }
 
 .welcome-stats strong {
-  font-size: 28px;
+  font-size: 34px;
+  line-height: 1;
 }
 
 .welcome-stats span {
@@ -328,14 +377,38 @@ input:disabled {
   grid-area: cards;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .welcome-card {
-  padding: 18px;
+  min-height: 190px;
+  padding: 20px;
   display: grid;
   align-content: start;
-  gap: 9px;
+  gap: 10px;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: #0b8f83;
+}
+
+.welcome-card:nth-child(2)::before {
+  background: #ffb13d;
+}
+
+.welcome-card:nth-child(3)::before {
+  background: #ff6f59;
+}
+
+.welcome-card:nth-child(4)::before {
+  background: #171a19;
 }
 
 .welcome-card span {
@@ -348,18 +421,20 @@ input:disabled {
   color: #fff;
   font-size: 11px;
   font-weight: 900;
+  margin-top: 4px;
 }
 
 .welcome-card h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .welcome-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .product-row,
@@ -826,7 +901,7 @@ textarea {
     padding: 22px;
   }
 
-  .welcome-stats,
+  .welcome-stats-grid,
   .welcome-grid {
     grid-template-columns: 1fr;
   }

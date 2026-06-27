@@ -43,6 +43,14 @@ const categories = ["Imagem", "Video", "Copy"];
 const videoTakeTypes = ["Todos", "1 take", "varios takes"];
 const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
 
+function categoryLabel(value: string) {
+  return value === "Video" ? "Vídeo" : value;
+}
+
+function takeTypeLabel(value: string) {
+  return value === "varios takes" ? "vários takes" : value;
+}
+
 function extractSpeechLines(template: string) {
   const match = speechHeaderPattern.exec(template);
   if (!match) return [];
@@ -116,7 +124,7 @@ export default function Home() {
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         const details = data?.details ? ` ${data.details}` : "";
-        throw new Error(`Nao foi possivel carregar os dados.${details}`);
+        throw new Error(`Não foi possível carregar os dados.${details}`);
       }
 
       const data = await response.json();
@@ -189,10 +197,10 @@ export default function Home() {
   }
 
   async function createBusiness() {
-    const name = window.prompt("Nome do negocio", "Novo negocio")?.trim();
+    const name = window.prompt("Nome do negócio", "Novo negócio")?.trim();
     if (!name) return;
 
-    const niche = window.prompt("Nicho / descricao", "TikTok Shop")?.trim() || "TikTok Shop";
+    const niche = window.prompt("Nicho / descrição", "TikTok Shop")?.trim() || "TikTok Shop";
     const response = await fetch("/api/businesses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -205,15 +213,15 @@ export default function Home() {
     setProductId(data.business.products[0]?.id ?? "");
     setView("library");
     closeEditor();
-    showToast("Negocio criado");
+    showToast("Negócio criado");
   }
 
   async function editBusiness() {
     if (!business) return;
-    const name = window.prompt("Nome do negocio", business.name)?.trim();
+    const name = window.prompt("Nome do negócio", business.name)?.trim();
     if (!name) return;
 
-    const niche = window.prompt("Nicho / descricao", business.niche)?.trim() || business.niche;
+    const niche = window.prompt("Nicho / descrição", business.niche)?.trim() || business.niche;
     await fetch(`/api/businesses/${business.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -221,19 +229,19 @@ export default function Home() {
     });
 
     await loadData();
-    showToast("Negocio atualizado");
+    showToast("Negócio atualizado");
   }
 
   async function deleteBusiness() {
     if (!business) return;
-    if (!window.confirm(`Excluir o negocio "${business.name}" e todos os produtos/prompts dele?`)) return;
+    if (!window.confirm(`Excluir o negócio "${business.name}" e todos os produtos/prompts dele?`)) return;
 
     await fetch(`/api/businesses/${business.id}`, { method: "DELETE" });
     setBusinessId("");
     setProductId("");
     closeEditor();
     await loadData();
-    showToast("Negocio excluido");
+    showToast("Negócio excluído");
   }
 
   async function createProduct() {
@@ -272,7 +280,7 @@ export default function Home() {
     setProductId("");
     closeEditor();
     await loadData();
-    showToast("Produto excluido");
+    showToast("Produto excluído");
   }
 
   async function renameProduct(name: string) {
@@ -344,7 +352,7 @@ export default function Home() {
     await fetch(`/api/prompts/${prompt.id}`, { method: "DELETE" });
     if (draft?.id === prompt.id) closeEditor();
     await loadData();
-    showToast("Prompt excluido");
+    showToast("Prompt excluído");
   }
 
   if (loading) return <main className="center">Carregando TikPrompt Studio...</main>;
@@ -365,7 +373,7 @@ export default function Home() {
     return (
       <main className="center">
         <h1>TikPrompt Studio</h1>
-        <p>Banco vazio. Crie dados iniciais ou comece um negocio do zero.</p>
+        <p>Banco vazio. Crie dados iniciais ou comece um negócio do zero.</p>
         <div className="center-actions">
           <button
             className="secondary"
@@ -377,7 +385,7 @@ export default function Home() {
             Criar dados iniciais
           </button>
           <button className="primary" onClick={createBusiness}>
-            Criar negocio
+            Criar negócio
           </button>
         </div>
       </main>
@@ -396,7 +404,7 @@ export default function Home() {
         </button>
 
         <section className="side-section">
-          <div className="side-title">Negocios</div>
+          <div className="side-title">Negócios</div>
           {businesses.map((item) => (
             <button
               className={`business-button ${item.id === business.id ? "active" : ""}`}
@@ -434,56 +442,65 @@ export default function Home() {
             <div className="welcome-hero">
               <span className="welcome-kicker">Bem-vindo</span>
               <h1>TikPrompt Studio</h1>
-              <p>Organize prompts por negocio e produto, copie com velocidade e mantenha suas variacoes de imagem, video e copy prontas para producao.</p>
+              <p>
+                Organize prompts por negócio e produto, copie com velocidade e mantenha suas variações de imagem, vídeo e copy prontas para produção.
+              </p>
+              <div className="welcome-audience">
+                <strong>Público-alvo</strong>
+                <span>Criadores de conteúdo para vendas no TikTok, Instagram, Facebook e empreendedores de e-commerce que produzem conteúdo em escala.</span>
+              </div>
               <div className="welcome-actions">
                 <button className="primary" onClick={() => setView("library")}>
                   Abrir biblioteca
                 </button>
                 <button className="secondary" onClick={createBusiness}>
-                  Criar negocio
+                  Criar negócio
                 </button>
               </div>
             </div>
 
             <div className="welcome-stats">
-              <div>
-                <strong>{businesses.length}</strong>
-                <span>negocios</span>
-              </div>
-              <div>
-                <strong>{totalProducts}</strong>
-                <span>produtos</span>
-              </div>
-              <div>
-                <strong>{totalPrompts}</strong>
-                <span>prompts</span>
-              </div>
-              <div>
-                <strong>{totalVideos}</strong>
-                <span>videos</span>
+              <h2>Totais</h2>
+              <div className="welcome-stats-grid">
+                <div>
+                  <strong>{businesses.length}</strong>
+                  <span>negócios</span>
+                </div>
+                <div>
+                  <strong>{totalProducts}</strong>
+                  <span>produtos</span>
+                </div>
+                <div>
+                  <strong>{totalPrompts}</strong>
+                  <span>prompts</span>
+                </div>
+                <div>
+                  <strong>{totalVideos}</strong>
+                  <span>vídeos</span>
+                </div>
               </div>
             </div>
 
             <div className="welcome-grid">
               <article className="welcome-card">
                 <span>01</span>
-                <h2>Biblioteca por produto</h2>
-                <p>Separe prompts por negocio, produto e categoria para encontrar o que precisa sem procurar em arquivos soltos.</p>
+                <h2>Tudo em um só lugar</h2>
+                <p>Chega de abrir 10 abas diferentes para encontrar o prompt certo. Imagens, roteiros de vídeo e copies ficam organizados a um clique.</p>
               </article>
               <article className="welcome-card">
                 <span>02</span>
-                <h2>Copiar rapido</h2>
-                <p>Use os cards compactos e o destaque do ultimo prompt copiado para manter o ritmo na producao.</p>
+                <h2>Prompts por negócio e produto</h2>
+                <p>Cada negócio tem sua própria estrutura de produtos. Você cria uma vez, organiza do seu jeito e acessa sem confusão.</p>
               </article>
               <article className="welcome-card">
                 <span>03</span>
-                <h2>Videos com take</h2>
-                <p>Organize videos em 1 take ou varios takes, com campo de fala separado para editar em poucos segundos.</p>
+                <h2>Roteiros com takes numerados</h2>
+                <p>Produza vídeos com consistência usando takes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
               </article>
               <article className="welcome-card">
                 <span>04</span>
-                <h2>Duplicar e adaptar</h2>
-                <p>Duplique produtos ou prompts modelo e adapte apenas o que muda para cada nova campanha.</p>
+                <h2>Copies prontas para copiar</h2>
+                <p>Legendas, CTAs e copies de postagem ficam salvas por produto, com cópia em um clique para não reescrever o que já funcionou.</p>
               </article>
             </div>
           </section>
@@ -493,7 +510,7 @@ export default function Home() {
           <div>
             <h1>{business.name}</h1>
             <p>
-              {business.niche} - {product?.name ?? "sem produto"} - {category}
+              {business.niche} - {product?.name ?? "sem produto"} - {categoryLabel(category)}
             </p>
           </div>
           <label className="search">
@@ -550,7 +567,7 @@ export default function Home() {
                   closeEditor();
                 }}
               >
-                {item}
+                {categoryLabel(item)}
               </button>
             ))}
           </div>
@@ -573,11 +590,11 @@ export default function Home() {
                     closeEditor();
                   }}
                 >
-                  {item}
+                  {takeTypeLabel(item)}
                 </button>
               ))}
             </div>
-            <span className="subtabs-note">Separe versoes do mesmo produto por take e salve as copys como cards.</span>
+            <span className="subtabs-note">Separe versões do mesmo produto por take e salve as copies como cards.</span>
           </section>
         )}
 
@@ -587,7 +604,7 @@ export default function Home() {
               <div>
                 <h2>Biblioteca</h2>
                 <span>
-                  {prompts.length} itens em {product?.name ?? "sem produto"} / {category}
+                  {prompts.length} itens em {product?.name ?? "sem produto"} / {categoryLabel(category)}
                 </span>
               </div>
               <button className="secondary" onClick={createPrompt} disabled={!product}>
@@ -664,7 +681,7 @@ export default function Home() {
                       <input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
                     </label>
                     <label className="field">
-                      <span className="field-label">Rotulo / descricao</span>
+                      <span className="field-label">Rótulo / descrição</span>
                       <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
                     </label>
                     {draft.category === "Video" && (
@@ -672,7 +689,7 @@ export default function Home() {
                         <span className="field-label">Take</span>
                         <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
                           <option value="1 take">1 take</option>
-                          <option value="varios takes">varios takes</option>
+                          <option value="varios takes">vários takes</option>
                         </select>
                       </label>
                     )}
@@ -682,7 +699,7 @@ export default function Home() {
                     <section className="speech-card">
                       <div className="speech-card-head">
                         <span className="speech-pill">{draft.lineSectionTitle ?? "SPEECH (Portuguese BR)"}</span>
-                        <span className="speech-hint">{draft.lineHelp ?? "Campo de edicao rapida"}</span>
+                        <span className="speech-hint">{draft.lineHelp ?? "Campo de edição rápida"}</span>
                       </div>
                       <textarea
                         value={draft.speechLines.join("\n\n")}

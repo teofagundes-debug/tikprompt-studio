@@ -600,21 +600,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  <label className="template-area">
-                    <span className="field-label">
-                      Prompt completo
-                      <span>{draft.template.length} caracteres</span>
-                    </span>
-                    <textarea
-                      value={draft.template}
-                      onChange={(event) => {
-                        const template = event.target.value;
-                        const speechLines = draft.category === "Video" ? extractSpeechLines(template) : [];
-                        setDraft({ ...draft, template, speechLines: speechLines.length ? speechLines : draft.speechLines });
-                      }}
-                    />
-                  </label>
-
                   {draft.lineTokenPrefix && (
                     <section className="speech-card">
                       <div className="speech-card-head">
@@ -639,6 +624,21 @@ export default function Home() {
                       />
                     </section>
                   )}
+
+                  <label className="template-area">
+                    <span className="field-label">
+                      Prompt completo
+                      <span>{draft.template.length} caracteres</span>
+                    </span>
+                    <textarea
+                      value={draft.template}
+                      onChange={(event) => {
+                        const template = event.target.value;
+                        const speechLines = draft.category === "Video" ? extractSpeechLines(template) : [];
+                        setDraft({ ...draft, template, speechLines: speechLines.length ? speechLines : draft.speechLines });
+                      }}
+                    />
+                  </label>
                 </div>
               )}
 

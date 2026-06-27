@@ -573,9 +573,14 @@ export default function Home() {
                   <h2>{draft?.title ?? "Editor"}</h2>
                   <span>Prompt completo salvo para copiar e colar</span>
                 </div>
-                <button className="secondary" onClick={savePrompt}>
-                  Salvar edicao
-                </button>
+                <div className="editor-head-actions">
+                  <button className="ghost" onClick={closeEditor}>
+                    Fechar
+                  </button>
+                  <button className="secondary" onClick={savePrompt}>
+                    Salvar edição
+                  </button>
+                </div>
               </div>
 
               {draft && (
@@ -643,9 +648,6 @@ export default function Home() {
               )}
 
               <div className="editor-footer">
-                <button className="ghost" onClick={closeEditor}>
-                  Fechar
-                </button>
                 <button className="primary" onClick={() => draft && copyPrompt(draft)}>
                   Copiar
                 </button>

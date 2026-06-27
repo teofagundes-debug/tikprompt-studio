@@ -410,6 +410,14 @@ input:disabled {
   color: var(--muted);
 }
 
+.editor-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .prompt-list,
 .editor-body {
   display: grid;

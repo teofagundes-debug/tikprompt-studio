@@ -99,6 +99,7 @@ export default function Home() {
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [copiedPromptId, setCopiedPromptId] = useState("");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
@@ -174,6 +175,7 @@ export default function Home() {
 
   async function copyPrompt(prompt: Prompt) {
     await navigator.clipboard.writeText(buildPromptOutput(prompt));
+    setCopiedPromptId(prompt.id);
     showToast("Prompt copiado");
   }
 
@@ -525,7 +527,7 @@ export default function Home() {
               {!product && <p className="empty-state">Crie um produto para salvar prompts.</p>}
               {product && !prompts.length && <p className="empty-state">Nenhum prompt nesta categoria. Clique em Criar prompt.</p>}
               {prompts.map((prompt) => (
-                <article className={`prompt-card ${prompt.id === promptId ? "active" : ""}`} key={prompt.id}>
+                <article className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""}`} key={prompt.id}>
                   <div className="prompt-top">
                     <span className="thumb" style={{ background: prompt.thumb ?? undefined }} />
                     <span>

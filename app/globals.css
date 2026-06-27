@@ -446,6 +446,17 @@ input:disabled {
   box-shadow: 0 0 0 3px var(--teal-2);
 }
 
+.prompt-card.copied {
+  border-color: rgba(245, 200, 76, 0.9);
+  background: #fff8df;
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.24);
+}
+
+.prompt-card.copied .prompt-action.copy {
+  background: #0b8f83;
+  border-color: #0b8f83;
+}
+
 .prompt-top {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);

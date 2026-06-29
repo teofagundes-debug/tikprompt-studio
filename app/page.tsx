@@ -122,6 +122,17 @@ function normalizePromptForEditor(prompt: Prompt) {
   return { ...prompt, speechLines };
 }
 
+async function readJson(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text.slice(0, 220) };
+  }
+}
+
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -157,7 +168,10 @@ export default function Home() {
 
     try {
       const response = await fetch("/api/auth/status", { cache: "no-store" });
-      const data = await response.json();
+      const data = await readJson(response);
+      if (!response.ok) {
+        throw new Error(data.error ?? data.details ?? "Não foi possível carregar autenticação.");
+      }
       setCurrentUser(data.user);
       setNeedsSetup(Boolean(data.needsSetup));
 
@@ -188,12 +202,12 @@ export default function Home() {
           setBusinesses([]);
           return;
         }
-        const data = await response.json().catch(() => null);
+        const data = await readJson(response);
         const details = data?.details ? ` ${data.details}` : "";
         throw new Error(`Não foi possível carregar os dados.${details}`);
       }
 
-      const data = await response.json();
+      const data = await readJson(response);
       setBusinesses(data.businesses);
       if (data.user) setCurrentUser(data.user);
     } catch (error) {
@@ -273,7 +287,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, niche })
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     await loadData();
     setBusinessId(data.business.id);
@@ -321,7 +335,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, businessId: business.id })
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     await loadData();
     setProductId(data.product.id);
@@ -332,7 +346,7 @@ export default function Home() {
   async function duplicateProduct() {
     if (!product) return;
     const response = await fetch(`/api/products/${product.id}/duplicate`, { method: "POST" });
-    const data = await response.json();
+    const data = await readJson(response);
     await loadData();
     setProductId(data.product.id);
     closeEditor();
@@ -379,7 +393,7 @@ export default function Home() {
         takeType: category === "Video" && videoTakeType !== "Todos" ? videoTakeType : "1 take"
       })
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     await loadData();
     setPromptId(data.prompt.id);
@@ -395,7 +409,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(draft)
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     setPromptId(data.prompt.id);
     await loadData();
@@ -405,7 +419,7 @@ export default function Home() {
 
   async function duplicatePrompt(prompt: Prompt) {
     const response = await fetch(`/api/prompts/${prompt.id}/duplicate`, { method: "POST" });
-    const data = await response.json();
+    const data = await readJson(response);
     await loadData();
     setPromptId(data.prompt.id);
     setDraft(normalizePromptForEditor(data.prompt));
@@ -431,7 +445,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: authEmail, password: authPassword, name: authName })
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok) {
       setLoadError(data.error ?? "Não foi possível entrar.");
@@ -471,7 +485,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword, newPassword })
     });
-    const data = await response.json().catch(() => null);
+    const data = await readJson(response);
 
     if (!response.ok) {
       setLoadError(data?.error ?? "Não foi possível trocar a senha.");
@@ -488,7 +502,7 @@ export default function Home() {
   async function loadAdminUsers() {
     const response = await fetch("/api/admin/users", { cache: "no-store" });
     if (!response.ok) return;
-    const data = await response.json();
+    const data = await readJson(response);
     setAdminUsers(data.users);
   }
 
@@ -507,7 +521,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: newUserEmail, name: newUserName, phone: newUserPhone, plan: newUserPlan })
     });
-    const data = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok) {
       setGeneratedAccess(data.error ?? "Não foi possível criar o usuário.");
@@ -528,7 +542,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "reset-password" })
     });
-    const data = await response.json();
+    const data = await readJson(response);
     setGeneratedAccess(`Login: ${data.user.email}\nSenha temporária: ${data.temporaryPassword}\nLink: ${data.loginUrl}`);
     await loadAdminUsers();
   }

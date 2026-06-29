@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { buildPromptOutput, getPromptChips } from "@/lib/prompt";
 
 type Prompt = {
@@ -37,6 +37,30 @@ type Business = {
   initials: string;
   color: string;
   products: Product[];
+};
+
+type CurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  forcePasswordChange: boolean;
+};
+
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  status: string;
+  plan: string | null;
+  paymentId: string | null;
+  forcePasswordChange: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  _count: { businesses: number };
 };
 
 const categories = ["Imagem", "Video", "Copy"];
@@ -100,11 +124,24 @@ function normalizePromptForEditor(prompt: Prompt) {
 
 export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [newUserPlan, setNewUserPlan] = useState("");
+  const [generatedAccess, setGeneratedAccess] = useState("");
   const [businessId, setBusinessId] = useState("");
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Video");
   const [videoTakeType, setVideoTakeType] = useState("Todos");
-  const [view, setView] = useState<"home" | "library">("home");
+  const [view, setView] = useState<"home" | "library" | "admin" | "password">("home");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -114,14 +151,43 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  async function loadData() {
+  async function loadAuth() {
     setLoading(true);
+    setLoadError("");
+
+    try {
+      const response = await fetch("/api/auth/status", { cache: "no-store" });
+      const data = await response.json();
+      setCurrentUser(data.user);
+      setNeedsSetup(Boolean(data.needsSetup));
+
+      if (data.user && !data.user.forcePasswordChange) {
+        await loadData(false);
+      } else {
+        setBusinesses([]);
+      }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Erro ao carregar autenticação.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadData(showLoader = true) {
+    if (showLoader) {
+      setLoading(true);
+    }
     setLoadError("");
 
     try {
       const response = await fetch("/api/data", { cache: "no-store" });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setCurrentUser(null);
+          setBusinesses([]);
+          return;
+        }
         const data = await response.json().catch(() => null);
         const details = data?.details ? ` ${data.details}` : "";
         throw new Error(`Não foi possível carregar os dados.${details}`);
@@ -129,15 +195,16 @@ export default function Home() {
 
       const data = await response.json();
       setBusinesses(data.businesses);
+      if (data.user) setCurrentUser(data.user);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Erro ao carregar o app.");
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
+    loadAuth();
   }, []);
 
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
@@ -355,14 +422,205 @@ export default function Home() {
     showToast("Prompt excluído");
   }
 
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoadError("");
+
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: authEmail, password: authPassword, name: authName })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setLoadError(data.error ?? "Não foi possível entrar.");
+      return;
+    }
+
+    setCurrentUser(data.user);
+    setNeedsSetup(false);
+    setAuthPassword("");
+    setAuthName("");
+
+    if (data.user.forcePasswordChange) {
+      setView("password");
+      setBusinesses([]);
+    } else {
+      await loadData();
+      setView("home");
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setCurrentUser(null);
+    setBusinesses([]);
+    setBusinessId("");
+    setProductId("");
+    setView("home");
+    closeEditor();
+  }
+
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoadError("");
+
+    const response = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setLoadError(data?.error ?? "Não foi possível trocar a senha.");
+      return;
+    }
+
+    setCurrentPassword("");
+    setNewPassword("");
+    await loadAuth();
+    setView("home");
+    showToast("Senha atualizada");
+  }
+
+  async function loadAdminUsers() {
+    const response = await fetch("/api/admin/users", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setAdminUsers(data.users);
+  }
+
+  async function openAdmin() {
+    setView("admin");
+    closeEditor();
+    await loadAdminUsers();
+  }
+
+  async function createUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setGeneratedAccess("");
+
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newUserEmail, name: newUserName, phone: newUserPhone, plan: newUserPlan })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setGeneratedAccess(data.error ?? "Não foi possível criar o usuário.");
+      return;
+    }
+
+    setGeneratedAccess(`Login: ${data.user.email}\nSenha temporária: ${data.temporaryPassword}\nLink: ${data.loginUrl}`);
+    setNewUserEmail("");
+    setNewUserName("");
+    setNewUserPhone("");
+    setNewUserPlan("");
+    await loadAdminUsers();
+  }
+
+  async function resetUserPassword(userId: string) {
+    const response = await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reset-password" })
+    });
+    const data = await response.json();
+    setGeneratedAccess(`Login: ${data.user.email}\nSenha temporária: ${data.temporaryPassword}\nLink: ${data.loginUrl}`);
+    await loadAdminUsers();
+  }
+
+  async function toggleUserStatus(user: AdminUser) {
+    await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: user.status === "ACTIVE" ? "BLOCKED" : "ACTIVE" })
+    });
+    await loadAdminUsers();
+  }
+
   if (loading) return <main className="center">Carregando TikPrompt Studio...</main>;
+
+  if (!currentUser) {
+    return (
+      <main className="auth-screen">
+        <section className="auth-card">
+          <div className="mark">TP</div>
+          <h1>{needsSetup ? "Criar admin inicial" : "Entrar no TikPrompt Studio"}</h1>
+          <p>
+            {needsSetup
+              ? "Cadastre seu primeiro acesso administrativo. Depois disso, novos usuários entram pelo painel ou webhook."
+              : "Acesse sua biblioteca de prompts com email e senha."}
+          </p>
+          <form className="auth-form" onSubmit={login}>
+            {needsSetup && (
+              <label className="field">
+                <span className="field-label">Seu nome</span>
+                <input value={authName} onChange={(event) => setAuthName(event.target.value)} placeholder="Ex: Teo" />
+              </label>
+            )}
+            <label className="field">
+              <span className="field-label">Email</span>
+              <input value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="voce@email.com" type="email" />
+            </label>
+            <label className="field">
+              <span className="field-label">Senha</span>
+              <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="Senha" type="password" />
+            </label>
+            {loadError && <p className="form-error">{loadError}</p>}
+            <button className="primary" type="submit">
+              {needsSetup ? "Criar admin e entrar" : "Entrar"}
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  if (currentUser.forcePasswordChange || view === "password") {
+    return (
+      <main className="auth-screen">
+        <section className="auth-card">
+          <div className="mark">TP</div>
+          <h1>Trocar senha</h1>
+          <p>{currentUser.forcePasswordChange ? "Este é seu primeiro acesso. Crie uma senha nova para continuar." : "Atualize sua senha de acesso."}</p>
+          <form className="auth-form" onSubmit={changePassword}>
+            {!currentUser.forcePasswordChange && (
+              <label className="field">
+                <span className="field-label">Senha atual</span>
+                <input value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} type="password" />
+              </label>
+            )}
+            <label className="field">
+              <span className="field-label">Nova senha</span>
+              <input value={newPassword} onChange={(event) => setNewPassword(event.target.value)} type="password" minLength={8} />
+            </label>
+            {loadError && <p className="form-error">{loadError}</p>}
+            <div className="auth-actions">
+              {!currentUser.forcePasswordChange && (
+                <button className="secondary" type="button" onClick={() => setView("home")}>
+                  Cancelar
+                </button>
+              )}
+              <button className="primary" type="submit">
+                Salvar senha
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    );
+  }
 
   if (loadError) {
     return (
       <main className="center">
         <h1>TikPrompt Studio</h1>
         <p>{loadError}</p>
-        <button className="primary" onClick={loadData}>
+        <button className="primary" onClick={() => loadData()}>
           Tentar novamente
         </button>
       </main>
@@ -403,6 +661,20 @@ export default function Home() {
           </div>
         </button>
 
+        <section className="user-box">
+          <strong>{currentUser.name}</strong>
+          <span>{currentUser.email}</span>
+          <div className="user-actions">
+            {currentUser.role === "ADMIN" && (
+              <button onClick={openAdmin}>
+                Admin
+              </button>
+            )}
+            <button onClick={() => setView("password")}>Senha</button>
+            <button onClick={logout}>Sair</button>
+          </div>
+        </section>
+
         <section className="side-section">
           <div className="side-title">Negócios</div>
           {businesses.map((item) => (
@@ -437,7 +709,76 @@ export default function Home() {
       </aside>
 
       <section className="main">
-        {view === "home" ? (
+        {view === "admin" ? (
+          <section className="admin-screen">
+            <header className="topbar admin-topbar">
+              <div>
+                <h1>Gestão de usuários</h1>
+                <p>Crie acessos, gere senha temporária e bloqueie clientes quando necessário.</p>
+              </div>
+              <button className="secondary" onClick={loadAdminUsers}>
+                Atualizar
+              </button>
+            </header>
+
+            <section className="admin-grid">
+              <form className="admin-create" onSubmit={createUser}>
+                <h2>Novo usuário</h2>
+                <label className="field">
+                  <span className="field-label">Email</span>
+                  <input value={newUserEmail} onChange={(event) => setNewUserEmail(event.target.value)} type="email" placeholder="cliente@email.com" />
+                </label>
+                <label className="field">
+                  <span className="field-label">Nome</span>
+                  <input value={newUserName} onChange={(event) => setNewUserName(event.target.value)} placeholder="Nome do cliente" />
+                </label>
+                <label className="field">
+                  <span className="field-label">WhatsApp</span>
+                  <input value={newUserPhone} onChange={(event) => setNewUserPhone(event.target.value)} placeholder="5511999999999" />
+                </label>
+                <label className="field">
+                  <span className="field-label">Plano</span>
+                  <input value={newUserPlan} onChange={(event) => setNewUserPlan(event.target.value)} placeholder="Mensal" />
+                </label>
+                <button className="primary" type="submit">
+                  Criar acesso
+                </button>
+                {generatedAccess && <textarea className="access-box" readOnly value={generatedAccess} />}
+              </form>
+
+              <section className="admin-users">
+                <div className="panel-head">
+                  <div>
+                    <h2>Usuários</h2>
+                    <span>{adminUsers.length} cadastros</span>
+                  </div>
+                </div>
+                <div className="user-list">
+                  {adminUsers.map((user) => (
+                    <article className="user-card" key={user.id}>
+                      <div>
+                        <strong>{user.name}</strong>
+                        <span>{user.email}</span>
+                        <small>
+                          {user.role} - {user.status} - {user._count.businesses} negócios
+                        </small>
+                      </div>
+                      <div className="user-card-actions">
+                        <button className="secondary" onClick={() => resetUserPassword(user.id)}>
+                          Resetar senha
+                        </button>
+                        <button className={`secondary ${user.status === "ACTIVE" ? "danger" : ""}`} onClick={() => toggleUserStatus(user)}>
+                          {user.status === "ACTIVE" ? "Bloquear" : "Liberar"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                  {!adminUsers.length && <p className="empty-state">Nenhum usuário carregado.</p>}
+                </div>
+              </section>
+            </section>
+          </section>
+        ) : view === "home" ? (
           <section className="welcome-screen">
             <div className="welcome-hero">
               <span className="welcome-kicker">Bem-vindo</span>

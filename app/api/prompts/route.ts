@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 function defaultPrompt(category: string) {
   if (category === "Video") {
@@ -52,12 +53,18 @@ function defaultPrompt(category: string) {
 }
 
 export async function POST(request: Request) {
+  const { user, response } = await requireUser();
+  if (response || !user) return response;
+
   const body = await request.json();
   const category = String(body.category ?? "Video");
   const takeType = category === "Video" ? String(body.takeType ?? "1 take") : null;
   const productId = String(body.productId ?? "");
   const businessId = String(body.businessId ?? "");
   const defaults = defaultPrompt(category);
+  await prisma.product.findFirstOrThrow({
+    where: { id: productId, businessId, business: { userId: user.id } }
+  });
 
   const prompt = await prisma.prompt.create({
     data: {

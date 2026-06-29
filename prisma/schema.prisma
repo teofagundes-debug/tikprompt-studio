@@ -13,10 +13,34 @@ model Business {
   niche     String
   initials  String
   color     String
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   products  Product[]
   prompts   Prompt[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model User {
+  id                  String     @id @default(cuid())
+  name                String
+  email               String     @unique
+  phone               String?
+  role                String     @default("USER")
+  status              String     @default("ACTIVE")
+  passwordHash        String
+  forcePasswordChange Boolean    @default(true)
+  plan                String?
+  paymentId           String?
+  businesses          Business[]
+  lastLoginAt         DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([role])
+  @@index([status])
 }
 
 model Product {

@@ -109,6 +109,41 @@ input:disabled {
   margin-top: 2px;
 }
 
+.user-box {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  gap: 5px;
+  padding: 0 8px 14px;
+}
+
+.user-box strong {
+  font-size: 13px;
+}
+
+.user-box span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.user-actions button {
+  min-height: 30px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
 .side-section {
   display: grid;
   gap: 8px;
@@ -234,6 +269,132 @@ input:disabled {
   min-width: 0;
   width: 100%;
   background: transparent;
+}
+
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 208, 99, 0.18), transparent 35%),
+    linear-gradient(225deg, rgba(11, 143, 131, 0.18), transparent 40%),
+    #f6faf8;
+}
+
+.auth-card {
+  width: min(100%, 430px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.auth-card h1,
+.admin-create h2 {
+  margin: 0;
+}
+
+.auth-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.auth-form,
+.admin-create {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-error {
+  margin: 0;
+  border-radius: var(--radius);
+  border: 1px solid rgba(191, 52, 52, 0.22);
+  background: #fff2f0;
+  color: #9f241d;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.admin-screen {
+  min-height: 100vh;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding-bottom: 24px;
+}
+
+.admin-topbar {
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 24px;
+}
+
+.admin-create,
+.admin-users {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.access-box {
+  min-height: 120px;
+  resize: vertical;
+  background: #101312;
+  color: #fff;
+}
+
+.user-list {
+  display: grid;
+  gap: 10px;
+}
+
+.user-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfc;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.user-card strong,
+.user-card span,
+.user-card small {
+  display: block;
+}
+
+.user-card span,
+.user-card small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.user-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .welcome-screen {
@@ -1116,7 +1277,9 @@ textarea {
   .app,
   .workspace,
   .product-row,
-  .tabs-row {
+  .tabs-row,
+  .admin-grid,
+  .user-card {
     grid-template-columns: 1fr;
   }
 

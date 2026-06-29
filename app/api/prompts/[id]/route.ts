@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
+  const { user, response } = await requireUser();
+  if (response || !user) return response;
+
   const { id } = await params;
   const body = await request.json();
+  await prisma.prompt.findFirstOrThrow({ where: { id, business: { userId: user.id } } });
 
   const prompt = await prisma.prompt.update({
     where: { id },
@@ -22,7 +27,11 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
+  const { user, response } = await requireUser();
+  if (response || !user) return response;
+
   const { id } = await params;
+  await prisma.prompt.findFirstOrThrow({ where: { id, business: { userId: user.id } } });
   await prisma.prompt.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

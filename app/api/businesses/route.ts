@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   await ensureDatabaseSchema();
+  const { user, response } = await requireUser();
+  if (response || !user) return response;
 
   const body = await request.json();
   const name = String(body.name ?? "Novo negocio").trim() || "Novo negocio";
@@ -21,6 +24,7 @@ export async function POST(request: Request) {
       niche,
       initials: initials || "TN",
       color: "#f5c84c",
+      userId: user.id,
       products: {
         create: [{ name: "Novo produto" }]
       }

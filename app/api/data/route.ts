@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ensureDatabaseSchema, isMissingBusinessTable } from "@/lib/db-setup";
+import { publicUser, requireUser } from "@/lib/auth";
 
-async function getBusinesses() {
+async function getBusinesses(userId: string) {
   return prisma.business.findMany({
+    where: { userId },
     orderBy: { createdAt: "asc" },
     include: {
       products: {
@@ -16,14 +18,19 @@ async function getBusinesses() {
 
 export async function GET() {
   try {
-    const businesses = await getBusinesses();
+    const { user, response } = await requireUser();
+    if (response || !user) return response;
 
-    return NextResponse.json({ businesses });
+    const businesses = await getBusinesses(user.id);
+
+    return NextResponse.json({ businesses, user: publicUser(user) });
   } catch (error) {
     if (isMissingBusinessTable(error)) {
       await ensureDatabaseSchema();
-      const businesses = await getBusinesses();
-      return NextResponse.json({ businesses, initialized: true });
+      const { user, response } = await requireUser();
+      if (response || !user) return response;
+      const businesses = await getBusinesses(user.id);
+      return NextResponse.json({ businesses, user: publicUser(user), initialized: true });
     }
 
     const message = error instanceof Error ? error.message : "Erro desconhecido ao carregar dados.";
@@ -31,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error: "Nao foi possivel carregar os dados.",
+        error: "Não foi possível carregar os dados.",
         details: message
       },
       { status: 500 }

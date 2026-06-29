@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_request: Request, { params }: Params) {
+  const { user, response } = await requireUser();
+  if (response || !user) return response;
+
   const { id } = await params;
-  const prompt = await prisma.prompt.findUniqueOrThrow({ where: { id } });
+  const prompt = await prisma.prompt.findFirstOrThrow({ where: { id, business: { userId: user.id } } });
 
   const copy = await prisma.prompt.create({
     data: {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateTemporaryPassword, hashPassword, requireAdmin } from "@/lib/auth";
+import { generateTemporaryPassword, hashPassword, normalizeEmail, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
@@ -56,6 +56,7 @@ export async function PATCH(request: Request, { params }: Params) {
     where: { id },
     data: {
       ...(body.name ? { name: String(body.name) } : {}),
+      ...(body.email ? { email: normalizeEmail(String(body.email)) } : {}),
       ...(body.phone !== undefined ? { phone: String(body.phone || "") || null } : {}),
       ...(body.plan !== undefined ? { plan: String(body.plan || "") || null } : {}),
       ...(body.status ? { status: String(body.status) } : {}),
@@ -65,4 +66,17 @@ export async function PATCH(request: Request, { params }: Params) {
   });
 
   return NextResponse.json({ user });
+}
+
+export async function DELETE(_request: Request, { params }: Params) {
+  const { user: admin, response } = await requireAdmin();
+  if (response || !admin) return response;
+
+  const { id } = await params;
+  if (id === admin.id) {
+    return NextResponse.json({ error: "Você não pode excluir o próprio usuário admin." }, { status: 400 });
+  }
+
+  await prisma.user.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }

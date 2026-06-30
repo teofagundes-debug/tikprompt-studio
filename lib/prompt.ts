@@ -24,10 +24,12 @@ export function buildPromptOutput(prompt: PromptLike) {
 
 export function getPromptChips(prompt: PromptLike) {
   const text = `${prompt.title} ${prompt.description} ${prompt.template}`.toLowerCase();
-  const chips = [prompt.category];
+  const category = prompt.category === "Video" ? "Vídeo" : prompt.category === "Copy" ? "Copy-postagens" : prompt.category;
+  const takeType = prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType;
+  const chips = [category];
 
   if (prompt.tool) chips.push(prompt.tool);
-  if (prompt.takeType) chips.push(prompt.takeType);
+  if (takeType) chips.push(takeType);
   if (prompt.duration && prompt.duration !== "-") chips.push(prompt.duration);
   if (prompt.lineTokenPrefix || text.includes("speech")) chips.push("fala");
   if (text.includes("9:16")) chips.push("9:16");

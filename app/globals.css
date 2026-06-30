@@ -283,14 +283,14 @@ input:disabled {
 }
 
 .auth-card {
-  width: min(100%, 430px);
+  width: min(100%, 538px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
-  padding: 28px;
+  padding: 34px;
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .auth-card h1,
@@ -298,9 +298,17 @@ input:disabled {
   margin: 0;
 }
 
+.auth-title {
+  display: grid;
+  gap: 2px;
+  font-size: 40px;
+  line-height: 1.25;
+}
+
 .auth-card p {
   margin: 0;
   color: var(--muted);
+  font-size: 20px;
   line-height: 1.45;
 }
 

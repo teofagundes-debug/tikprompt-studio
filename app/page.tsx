@@ -64,15 +64,26 @@ type AdminUser = {
 };
 
 const categories = ["Imagem", "Video", "Copy"];
-const videoTakeTypes = ["Todos", "1 take", "varios takes"];
+const videoTakeTypes = ["Todos", "1 take", "2 takes", "3 takes", "+de 3 takes"];
 const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
 
 function categoryLabel(value: string) {
   return value === "Video" ? "Vídeo" : value;
 }
 
+function categoryTabLabel(value: string) {
+  return value === "Copy" ? "Copy-postagens" : categoryLabel(value);
+}
+
 function takeTypeLabel(value: string) {
-  return value === "varios takes" ? "vários takes" : value;
+  return value === "varios takes" ? "+de 3 takes" : value;
+}
+
+function matchesTakeType(promptTakeType: string | null, selectedTakeType: string) {
+  const value = promptTakeType ?? "1 take";
+  if (selectedTakeType === "Todos") return true;
+  if (selectedTakeType === "+de 3 takes") return value === "+de 3 takes" || value === "varios takes";
+  return value === selectedTakeType;
 }
 
 function extractSpeechLines(template: string) {
@@ -113,13 +124,14 @@ function syncSpeechSection(template: string, speechLines: string[]) {
 }
 
 function normalizePromptForEditor(prompt: Prompt) {
-  if (prompt.category !== "Video" || !prompt.lineTokenPrefix) return prompt;
+  const normalizedPrompt = prompt.takeType === "varios takes" ? { ...prompt, takeType: "+de 3 takes" } : prompt;
+  if (normalizedPrompt.category !== "Video" || !normalizedPrompt.lineTokenPrefix) return normalizedPrompt;
 
-  const speechLines = extractSpeechLines(prompt.template);
+  const speechLines = extractSpeechLines(normalizedPrompt.template);
   const onlyTokens = speechLines.length > 0 && speechLines.every((line) => /^\{[^}]+\}$/.test(line));
-  if (!speechLines.length || onlyTokens) return prompt;
+  if (!speechLines.length || onlyTokens) return normalizedPrompt;
 
-  return { ...prompt, speechLines };
+  return { ...normalizedPrompt, speechLines };
 }
 
 async function readJson(response: Response) {
@@ -150,7 +162,7 @@ export default function Home() {
   const [generatedAccess, setGeneratedAccess] = useState("");
   const [businessId, setBusinessId] = useState("");
   const [productId, setProductId] = useState("");
-  const [category, setCategory] = useState("Video");
+  const [category, setCategory] = useState("Imagem");
   const [videoTakeType, setVideoTakeType] = useState("Todos");
   const [view, setView] = useState<"home" | "library" | "admin" | "password">("home");
   const [promptId, setPromptId] = useState("");
@@ -237,7 +249,7 @@ export default function Home() {
       product?.prompts.filter((prompt) => {
         const haystack = `${prompt.title} ${prompt.description} ${getPromptChips(prompt).join(" ")} ${prompt.template}`.toLowerCase();
         const matchesCategory = prompt.category === category;
-        const matchesTake = category !== "Video" || videoTakeType === "Todos" || (prompt.takeType ?? "1 take") === videoTakeType;
+        const matchesTake = category !== "Video" || matchesTakeType(prompt.takeType, videoTakeType);
         return matchesCategory && matchesTake && haystack.includes(search.toLowerCase());
       }) ?? []
     );
@@ -512,6 +524,15 @@ export default function Home() {
     await loadAdminUsers();
   }
 
+  function openBusiness(businessItem: Business) {
+    setBusinessId(businessItem.id);
+    setProductId(businessItem.products[0]?.id ?? "");
+    setCategory("Imagem");
+    setVideoTakeType("Todos");
+    setView("library");
+    closeEditor();
+  }
+
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGeneratedAccess("");
@@ -547,6 +568,44 @@ export default function Home() {
     await loadAdminUsers();
   }
 
+  async function editAdminUser(user: AdminUser) {
+    const name = window.prompt("Nome do usuário", user.name)?.trim();
+    if (!name) return;
+
+    const email = window.prompt("Email do usuário", user.email)?.trim();
+    if (!email) return;
+
+    const response = await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email })
+    });
+    const data = await readJson(response);
+
+    if (!response.ok) {
+      setGeneratedAccess(data.error ?? "Não foi possível editar o usuário.");
+      return;
+    }
+
+    await loadAdminUsers();
+    showToast("Usuário atualizado");
+  }
+
+  async function deleteAdminUser(user: AdminUser) {
+    if (!window.confirm(`Excluir o usuário "${user.email}"? Os negócios dele também serão excluídos.`)) return;
+
+    const response = await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
+    const data = await readJson(response);
+
+    if (!response.ok) {
+      setGeneratedAccess(data.error ?? "Não foi possível excluir o usuário.");
+      return;
+    }
+
+    await loadAdminUsers();
+    showToast("Usuário excluído");
+  }
+
   async function toggleUserStatus(user: AdminUser) {
     await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
@@ -563,7 +622,16 @@ export default function Home() {
       <main className="auth-screen">
         <section className="auth-card">
           <div className="mark">TP</div>
-          <h1>{needsSetup ? "Criar admin inicial" : "Entrar no TikPrompt Studio"}</h1>
+          <h1 className="auth-title">
+            {needsSetup ? (
+              "Criar admin inicial"
+            ) : (
+              <>
+                <span>Entrar no</span>
+                <span>TikPrompt Studio</span>
+              </>
+            )}
+          </h1>
           <p>
             {needsSetup
               ? "Cadastre seu primeiro acesso administrativo. Depois disso, novos usuários entram pelo painel ou webhook."
@@ -695,12 +763,7 @@ export default function Home() {
             <button
               className={`business-button ${item.id === business.id ? "active" : ""}`}
               key={item.id}
-              onClick={() => {
-                setBusinessId(item.id);
-                setProductId(item.products[0]?.id ?? "");
-                setView("library");
-                closeEditor();
-              }}
+              onClick={() => openBusiness(item)}
             >
               <span className="business-avatar" style={{ background: item.color }}>
                 {item.initials}
@@ -778,11 +841,17 @@ export default function Home() {
                         </small>
                       </div>
                       <div className="user-card-actions">
+                        <button className="secondary" onClick={() => editAdminUser(user)}>
+                          Editar
+                        </button>
                         <button className="secondary" onClick={() => resetUserPassword(user.id)}>
                           Resetar senha
                         </button>
                         <button className={`secondary ${user.status === "ACTIVE" ? "danger" : ""}`} onClick={() => toggleUserStatus(user)}>
                           {user.status === "ACTIVE" ? "Bloquear" : "Liberar"}
+                        </button>
+                        <button className="secondary danger" onClick={() => deleteAdminUser(user)}>
+                          Excluir
                         </button>
                       </div>
                     </article>
@@ -805,7 +874,14 @@ export default function Home() {
                 <span>Criadores de conteúdo para vendas no TikTok, Instagram, Facebook e empreendedores de e-commerce que produzem conteúdo em escala.</span>
               </div>
               <div className="welcome-actions">
-                <button className="primary" onClick={() => setView("library")}>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setCategory("Imagem");
+                    setVideoTakeType("Todos");
+                    setView("library");
+                  }}
+                >
                   Abrir biblioteca
                 </button>
                 <button className="secondary" onClick={createBusiness}>
@@ -875,22 +951,18 @@ export default function Home() {
 
             <div className="welcome-grid">
               <article className="welcome-card">
-                <span>01</span>
                 <h2>Tudo em um só lugar</h2>
                 <p>Chega de abrir 10 abas diferentes para encontrar o prompt certo. Imagens, roteiros de vídeo e copies ficam organizados a um clique.</p>
               </article>
               <article className="welcome-card">
-                <span>02</span>
                 <h2>Prompts por negócio e produto</h2>
                 <p>Cada negócio tem sua própria estrutura de produtos. Você cria uma vez, organiza do seu jeito e acessa sem confusão.</p>
               </article>
               <article className="welcome-card">
-                <span>03</span>
                 <h2>Roteiros com takes numerados</h2>
                 <p>Produza vídeos com consistência usando takes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
               </article>
               <article className="welcome-card">
-                <span>04</span>
                 <h2>Copies prontas para copiar</h2>
                 <p>Legendas, CTAs e copies de postagem ficam salvas por produto, com cópia em um clique para não reescrever o que já funcionou.</p>
               </article>
@@ -902,7 +974,7 @@ export default function Home() {
           <div>
             <h1>{business.name}</h1>
             <p>
-              {business.niche} - {product?.name ?? "sem produto"} - {categoryLabel(category)}
+              {business.niche} - {product?.name ?? "sem produto"} - {categoryTabLabel(category)}
             </p>
           </div>
           <label className="search">
@@ -959,7 +1031,7 @@ export default function Home() {
                   closeEditor();
                 }}
               >
-                {categoryLabel(item)}
+                  {categoryTabLabel(item)}
               </button>
             ))}
           </div>
@@ -996,7 +1068,7 @@ export default function Home() {
               <div>
                 <h2>Biblioteca</h2>
                 <span>
-                  {prompts.length} itens em {product?.name ?? "sem produto"} / {categoryLabel(category)}
+                  {prompts.length} itens em {product?.name ?? "sem produto"} / {categoryTabLabel(category)}
                 </span>
               </div>
               <button className="secondary" onClick={createPrompt} disabled={!product}>
@@ -1081,7 +1153,9 @@ export default function Home() {
                         <span className="field-label">Take</span>
                         <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
                           <option value="1 take">1 take</option>
-                          <option value="varios takes">vários takes</option>
+                          <option value="2 takes">2 takes</option>
+                          <option value="3 takes">3 takes</option>
+                          <option value="+de 3 takes">+de 3 takes</option>
                         </select>
                       </label>
                     )}

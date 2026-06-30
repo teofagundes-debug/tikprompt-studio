@@ -8,9 +8,17 @@ export async function POST(request: Request) {
 
   const secret = process.env.WEBHOOK_SECRET;
   const authorization = request.headers.get("authorization") ?? "";
+  const headerSecret = request.headers.get("x-webhook-secret") ?? "";
+  const token = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : authorization.trim();
 
-  if (!secret || authorization !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Webhook não autorizado." }, { status: 401 });
+  if (!secret || (token !== secret && headerSecret !== secret)) {
+    return NextResponse.json(
+      {
+        error: "Webhook não autorizado.",
+        hint: "Envie Authorization: Bearer WEBHOOK_SECRET ou X-Webhook-Secret com o mesmo valor configurado no Render."
+      },
+      { status: 401 }
+    );
   }
 
   const body = await request.json();

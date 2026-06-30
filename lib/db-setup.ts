@@ -80,11 +80,11 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_businessId_idx" ON "Prompt"("businessId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_productId_idx" ON "Prompt"("productId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_category_idx" ON "Prompt"("category");`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_role_idx" ON "User"("role");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Business_userId_idx" ON "Business"("userId");`);
-  await prisma.$executeRawUnsafe(`ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Prompt" ADD COLUMN IF NOT EXISTS "takeType" TEXT;`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = '1 take' WHERE "category" = 'Video' AND "takeType" IS NULL;`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = 'varios takes' WHERE "takeType" = '3 takes';`);

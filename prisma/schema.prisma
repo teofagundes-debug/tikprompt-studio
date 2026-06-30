@@ -64,6 +64,8 @@ model Prompt {
   tool             String?
   duration         String?
   takeType         String?
+  scriptGroup      String?
+  takeOrder        Int?
   tone             String?
   cta              String?
   thumb            String?
@@ -82,4 +84,5 @@ model Prompt {
   @@index([businessId])
   @@index([productId])
   @@index([category])
+  @@index([scriptGroup])
 }

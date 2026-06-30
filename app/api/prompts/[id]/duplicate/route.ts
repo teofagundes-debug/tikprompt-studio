@@ -22,6 +22,8 @@ export async function POST(_request: Request, { params }: Params) {
       tool: prompt.tool,
       duration: prompt.duration,
       takeType: prompt.takeType,
+      scriptGroup: prompt.scriptGroup,
+      takeOrder: prompt.takeOrder,
       tone: prompt.tone,
       cta: prompt.cta,
       thumb: prompt.thumb,

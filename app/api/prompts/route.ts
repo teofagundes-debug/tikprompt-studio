@@ -59,6 +59,8 @@ export async function POST(request: Request) {
   const body = await request.json();
   const category = String(body.category ?? "Video");
   const takeType = category === "Video" ? String(body.takeType ?? "1 take") : null;
+  const scriptGroup = category === "Video" ? String(body.scriptGroup ?? "Roteiro 1").trim() || "Roteiro 1" : null;
+  const takeOrder = category === "Video" ? Number(body.takeOrder ?? 1) || 1 : null;
   const productId = String(body.productId ?? "");
   const businessId = String(body.businessId ?? "");
   const defaults = defaultPrompt(category);
@@ -77,6 +79,8 @@ export async function POST(request: Request) {
       tool: defaults.tool,
       duration: defaults.duration,
       takeType,
+      scriptGroup,
+      takeOrder,
       tone: "Natural",
       cta: "Copiar prompt",
       thumb: "linear-gradient(135deg, #f5c84c, #f06449 52%, #0b8f83)",

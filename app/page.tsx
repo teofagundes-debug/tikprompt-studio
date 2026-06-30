@@ -12,6 +12,8 @@ type Prompt = {
   tool: string | null;
   duration: string | null;
   takeType: string | null;
+  scriptGroup: string | null;
+  takeOrder: number | null;
   tone: string | null;
   cta: string | null;
   thumb: string | null;
@@ -84,6 +86,39 @@ function matchesTakeType(promptTakeType: string | null, selectedTakeType: string
   if (selectedTakeType === "Todos") return true;
   if (selectedTakeType === "+de 3 takes") return value === "+de 3 takes" || value === "varios takes";
   return value === selectedTakeType;
+}
+
+function inferScriptNumber(title: string) {
+  const match = title.match(/(\d+)\s*$/);
+  return match ? Number(match[1]) : null;
+}
+
+function inferTakeOrder(title: string) {
+  const normalized = title.trim().toLowerCase();
+  if (normalized.startsWith("gatilho")) return 1;
+  if (normalized.startsWith("interesse")) return 2;
+  if (normalized.startsWith("cta")) return 3;
+  const match = normalized.match(/take\s*(\d+)/);
+  return match ? Number(match[1]) : 99;
+}
+
+function scriptGroupForPrompt(prompt: Prompt) {
+  if (prompt.scriptGroup) return prompt.scriptGroup;
+  const scriptNumber = inferScriptNumber(prompt.title);
+  return scriptNumber ? `Roteiro ${scriptNumber}` : "Roteiro sem grupo";
+}
+
+function takeOrderForPrompt(prompt: Prompt) {
+  return prompt.takeOrder ?? inferTakeOrder(prompt.title);
+}
+
+function sortScriptGroups(left: string, right: string) {
+  const leftNumber = inferScriptNumber(left);
+  const rightNumber = inferScriptNumber(right);
+  if (leftNumber && rightNumber) return leftNumber - rightNumber;
+  if (leftNumber) return -1;
+  if (rightNumber) return 1;
+  return left.localeCompare(right, "pt-BR");
 }
 
 function extractSpeechLines(template: string) {
@@ -255,6 +290,21 @@ export default function Home() {
     );
   }, [product, category, videoTakeType, search]);
 
+  const promptGroups = useMemo(() => {
+    const groups = prompts.reduce<Record<string, Prompt[]>>((acc, prompt) => {
+      const group = scriptGroupForPrompt(prompt);
+      acc[group] = acc[group] ? [...acc[group], prompt] : [prompt];
+      return acc;
+    }, {});
+
+    return Object.entries(groups)
+      .sort(([left], [right]) => sortScriptGroups(left, right))
+      .map(([scriptGroup, groupPrompts]) => ({
+        scriptGroup,
+        prompts: groupPrompts.sort((left, right) => takeOrderForPrompt(left) - takeOrderForPrompt(right) || left.title.localeCompare(right.title, "pt-BR"))
+      }));
+  }, [prompts]);
+
   useEffect(() => {
     if (!business && businesses.length) setBusinessId(businesses[0].id);
     if (business && !businessId) setBusinessId(business.id);
@@ -394,6 +444,7 @@ export default function Home() {
 
   async function createPrompt() {
     if (!business || !product) return;
+    const nextScriptNumber = promptGroups.length + 1;
 
     const response = await fetch("/api/prompts", {
       method: "POST",
@@ -402,7 +453,9 @@ export default function Home() {
         businessId: business.id,
         productId: product.id,
         category,
-        takeType: category === "Video" && videoTakeType !== "Todos" ? videoTakeType : "1 take"
+        takeType: category === "Video" && videoTakeType !== "Todos" ? videoTakeType : "1 take",
+        scriptGroup: category === "Video" ? `Roteiro ${nextScriptNumber}` : null,
+        takeOrder: 1
       })
     });
     const data = await readJson(response);
@@ -446,6 +499,30 @@ export default function Home() {
     if (draft?.id === prompt.id) closeEditor();
     await loadData();
     showToast("Prompt excluído");
+  }
+
+  async function duplicateScriptGroup(scriptGroup: string, groupPrompts: Prompt[]) {
+    if (!business || !product) return;
+    const response = await fetch("/api/prompts/group-duplicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessId: business.id,
+        productId: product.id,
+        scriptGroup,
+        takeType: videoTakeType,
+        promptIds: groupPrompts.map((prompt) => prompt.id)
+      })
+    });
+    const data = await readJson(response);
+
+    if (!response.ok) {
+      showToast(data.error ?? "Não foi possível duplicar o roteiro");
+      return;
+    }
+
+    await loadData();
+    showToast("Roteiro duplicado");
   }
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -613,6 +690,49 @@ export default function Home() {
       body: JSON.stringify({ status: user.status === "ACTIVE" ? "BLOCKED" : "ACTIVE" })
     });
     await loadAdminUsers();
+  }
+
+  function renderPromptCard(prompt: Prompt) {
+    return (
+      <article className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""}`} key={prompt.id}>
+        <div className="prompt-top">
+          <span className="thumb" style={{ background: prompt.thumb ?? undefined }} />
+          <span>
+            <h3>{prompt.title}</h3>
+            <p>{prompt.description}</p>
+          </span>
+        </div>
+        <div className="chips">
+          {getPromptChips(prompt).map((chip) => (
+            <span className="chip" key={chip}>
+              {chip}
+            </span>
+          ))}
+          {prompt.category === "Video" && <span className="chip strong-chip">{`${scriptGroupForPrompt(prompt)} • Take ${takeOrderForPrompt(prompt)}`}</span>}
+        </div>
+        <div className="prompt-actions">
+          <button className="prompt-action copy" onClick={() => copyPrompt(prompt)}>
+            Copiar
+          </button>
+          <button
+            className="prompt-action"
+            onClick={() => {
+              setPromptId(prompt.id);
+              setDraft(normalizePromptForEditor({ ...structuredClone(prompt), scriptGroup: scriptGroupForPrompt(prompt), takeOrder: takeOrderForPrompt(prompt) }));
+              setEditorOpen(true);
+            }}
+          >
+            Editar
+          </button>
+          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)}>
+            Duplicar
+          </button>
+          <button className="prompt-action danger" onClick={() => deletePrompt(prompt)}>
+            Excluir
+          </button>
+        </div>
+      </article>
+    );
   }
 
   if (loading) return <main className="center">Carregando TikPrompt Studio...</main>;
@@ -1078,45 +1198,22 @@ export default function Home() {
             <div className="prompt-list">
               {!product && <p className="empty-state">Crie um produto para salvar prompts.</p>}
               {product && !prompts.length && <p className="empty-state">Nenhum prompt nesta categoria. Clique em Criar prompt.</p>}
-              {prompts.map((prompt) => (
-                <article className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""}`} key={prompt.id}>
-                  <div className="prompt-top">
-                    <span className="thumb" style={{ background: prompt.thumb ?? undefined }} />
-                    <span>
-                      <h3>{prompt.title}</h3>
-                      <p>{prompt.description}</p>
-                    </span>
-                  </div>
-                  <div className="chips">
-                    {getPromptChips(prompt).map((chip) => (
-                      <span className="chip" key={chip}>
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="prompt-actions">
-                    <button className="prompt-action copy" onClick={() => copyPrompt(prompt)}>
-                      Copiar
-                    </button>
-                    <button
-                      className="prompt-action"
-                      onClick={() => {
-                        setPromptId(prompt.id);
-                        setDraft(normalizePromptForEditor(structuredClone(prompt)));
-                        setEditorOpen(true);
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button className="prompt-action" onClick={() => duplicatePrompt(prompt)}>
-                      Duplicar
-                    </button>
-                    <button className="prompt-action danger" onClick={() => deletePrompt(prompt)}>
-                      Excluir
-                    </button>
-                  </div>
-                </article>
-              ))}
+              {category !== "Video" && prompts.map((prompt) => renderPromptCard(prompt))}
+              {category === "Video" &&
+                promptGroups.map((group) => (
+                  <section className="script-group" key={group.scriptGroup}>
+                    <div className="script-group-head">
+                      <div>
+                        <h3>{group.scriptGroup}</h3>
+                        <span>{group.prompts.length} takes neste roteiro</span>
+                      </div>
+                      <button className="secondary" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
+                        Duplicar roteiro
+                      </button>
+                    </div>
+                    <div className="script-group-grid">{group.prompts.map((prompt) => renderPromptCard(prompt))}</div>
+                  </section>
+                ))}
             </div>
           </section>
 
@@ -1157,6 +1254,23 @@ export default function Home() {
                           <option value="3 takes">3 takes</option>
                           <option value="+de 3 takes">+de 3 takes</option>
                         </select>
+                      </label>
+                    )}
+                    {draft.category === "Video" && (
+                      <label className="field">
+                        <span className="field-label">Roteiro / grupo</span>
+                        <input value={draft.scriptGroup ?? ""} onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })} placeholder="Ex: Roteiro 1" />
+                      </label>
+                    )}
+                    {draft.category === "Video" && (
+                      <label className="field">
+                        <span className="field-label">Ordem do take</span>
+                        <input
+                          value={draft.takeOrder ?? ""}
+                          onChange={(event) => setDraft({ ...draft, takeOrder: Number(event.target.value) || null })}
+                          min={1}
+                          type="number"
+                        />
                       </label>
                     )}
                   </div>

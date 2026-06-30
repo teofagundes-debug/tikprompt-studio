@@ -19,6 +19,8 @@ export async function PATCH(request: Request, { params }: Params) {
       description: body.description,
       template: body.template,
       takeType: body.category === "Video" ? body.takeType ?? "1 take" : null,
+      scriptGroup: body.category === "Video" ? String(body.scriptGroup ?? "").trim() || null : null,
+      takeOrder: body.category === "Video" ? Number(body.takeOrder ?? 0) || null : null,
       speechLines: body.speechLines ?? []
     }
   });

@@ -1055,6 +1055,41 @@ input:disabled {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
+.script-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfc;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.script-group-head {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.script-group-head h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.script-group-head span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.script-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
 .prompt-card {
   border: 1px solid var(--line);
   background: #fff;
@@ -1129,6 +1164,12 @@ input:disabled {
   font-size: 10px;
   color: #505a55;
   font-weight: 750;
+}
+
+.strong-chip {
+  border-color: rgba(11, 143, 131, 0.38);
+  background: var(--teal-2);
+  color: #075f57;
 }
 
 .prompt-actions {

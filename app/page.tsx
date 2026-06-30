@@ -756,7 +756,7 @@ export default function Home() {
           <p>
             {needsSetup
               ? "Cadastre seu primeiro acesso administrativo. Depois disso, novos usuários entram pelo painel ou webhook."
-              : "Acesse sua biblioteca de prompts com email e senha."}
+              : "Acesse sua biblioteca com email e senha."}
           </p>
           <form className="auth-form" onSubmit={login}>
             {needsSetup && (

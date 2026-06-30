@@ -537,7 +537,8 @@ export default function Home() {
     const data = await readJson(response);
 
     if (!response.ok) {
-      setLoadError(data.error ?? "Não foi possível entrar.");
+      const details = data.details ? ` ${data.details}` : "";
+      setLoadError(`${data.error ?? "Não foi possível entrar."}${details}`);
       return;
     }
 

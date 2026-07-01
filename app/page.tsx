@@ -70,6 +70,10 @@ const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
 const customVideoTypesKey = "tikprompt-video-types";
 
+function sameText(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
 function categoryLabel(value: string) {
   return value === "Video" ? "Vídeo" : value;
 }
@@ -86,7 +90,7 @@ function takeTypeLabel(value: string) {
 function matchesTakeType(promptTakeType: string | null, selectedTakeType: string) {
   const value = promptTakeType ?? defaultVideoTypes[0];
   if (selectedTakeType === "+de 3 takes") return value === "+de 3 takes" || value === "varios takes";
-  return value === selectedTakeType;
+  return sameText(value, selectedTakeType);
 }
 
 function inferScriptNumber(title: string) {
@@ -311,8 +315,10 @@ export default function Home() {
 
   const businessVideoTypes = useMemo(() => {
     if (!business) return defaultVideoTypes;
-    const savedTypes = videoTypesByBusiness[business.id] ?? [];
-    return savedTypes.length ? savedTypes : defaultVideoTypes;
+    if (Object.prototype.hasOwnProperty.call(videoTypesByBusiness, business.id)) {
+      return videoTypesByBusiness[business.id] ?? [];
+    }
+    return defaultVideoTypes;
   }, [business, videoTypesByBusiness]);
 
   const videoTypeOptions = useMemo(() => {
@@ -497,7 +503,7 @@ export default function Home() {
   function saveBusinessVideoTypes(types: string[]) {
     if (!business) return;
     const uniqueTypes = [...new Set(types.filter(Boolean))];
-    const nextTypesByBusiness = { ...videoTypesByBusiness, [business.id]: uniqueTypes.length ? uniqueTypes : defaultVideoTypes };
+    const nextTypesByBusiness = { ...videoTypesByBusiness, [business.id]: uniqueTypes };
     setVideoTypesByBusiness(nextTypesByBusiness);
     window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypesByBusiness));
   }
@@ -507,9 +513,9 @@ export default function Home() {
     const name = window.prompt("Nome do tipo de vídeo", "Novo tipo")?.trim();
     if (!name) return;
 
-    const exists = videoTypeOptions.some((item) => item.toLowerCase() === name.toLowerCase());
+    const exists = videoTypeOptions.some((item) => sameText(item, name));
     if (exists) {
-      setVideoTakeType(videoTypeOptions.find((item) => item.toLowerCase() === name.toLowerCase()) ?? name);
+      setVideoTakeType(videoTypeOptions.find((item) => sameText(item, name)) ?? name);
       return;
     }
 
@@ -525,14 +531,14 @@ export default function Home() {
     const name = window.prompt("Editar tipo de vídeo", videoTakeType)?.trim();
     if (!name || name === videoTakeType) return;
 
-    const exists = videoTypeOptions.some((item) => item.toLowerCase() === name.toLowerCase() && item !== videoTakeType);
+    const exists = videoTypeOptions.some((item) => sameText(item, name) && !sameText(item, videoTakeType));
     if (exists) {
       showToast("Este tipo de vídeo já existe");
       return;
     }
 
-    const nextTypes = businessVideoTypes.map((item) => (item === videoTakeType ? name : item));
-    const finalTypes = nextTypes.includes(name) ? nextTypes : [...nextTypes, name];
+    const nextTypes = businessVideoTypes.map((item) => (sameText(item, videoTakeType) ? name : item));
+    const finalTypes = nextTypes.some((item) => sameText(item, name)) ? nextTypes : [...nextTypes, name];
     saveBusinessVideoTypes(finalTypes);
 
     const promptsToUpdate = business.products
@@ -561,10 +567,10 @@ export default function Home() {
       return;
     }
 
-    const fallbackType = videoTypeOptions.find((item) => item !== videoTakeType) ?? defaultVideoTypes[0];
+    const fallbackType = videoTypeOptions.find((item) => !sameText(item, videoTakeType)) ?? defaultVideoTypes[0];
     if (!window.confirm(`Excluir o tipo "${takeTypeLabel(videoTakeType)}"? Os prompts deste tipo serao movidos para "${takeTypeLabel(fallbackType)}".`)) return;
 
-    saveBusinessVideoTypes(businessVideoTypes.filter((item) => item !== videoTakeType));
+    saveBusinessVideoTypes(businessVideoTypes.filter((item) => !sameText(item, videoTakeType)));
 
     const promptsToUpdate = business.products
       .flatMap((item) => item.prompts)

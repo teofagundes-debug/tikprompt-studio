@@ -1049,6 +1049,7 @@ input:disabled {
   max-height: calc(100vh - 280px);
   overflow: auto;
   align-content: start;
+  align-items: start;
 }
 
 .library-only .prompt-list {
@@ -1061,6 +1062,8 @@ input:disabled {
   background: #fbfcfc;
   padding: 8px;
   display: grid;
+  align-content: start;
+  align-self: start;
   gap: 8px;
 }
 
@@ -1088,6 +1091,7 @@ input:disabled {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 8px;
+  align-items: start;
 }
 
 .prompt-card {
@@ -1096,6 +1100,8 @@ input:disabled {
   border-radius: var(--radius);
   padding: 8px;
   display: grid;
+  align-content: start;
+  align-self: start;
   gap: 7px;
 }
 

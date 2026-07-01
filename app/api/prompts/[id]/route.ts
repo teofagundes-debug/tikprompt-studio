@@ -18,7 +18,7 @@ export async function PATCH(request: Request, { params }: Params) {
       title: body.title,
       description: body.description,
       template: body.template,
-      takeType: body.category === "Video" ? body.takeType ?? "1 take" : null,
+      takeType: body.category === "Video" ? body.takeType ?? "1-POV" : null,
       scriptGroup: body.category === "Video" ? String(body.scriptGroup ?? "").trim() || null : null,
       takeOrder: body.category === "Video" ? Number(body.takeOrder ?? 0) || null : null,
       speechLines: body.speechLines ?? []

@@ -17,7 +17,7 @@ function defaultPrompt(category: string) {
         "\"Edite esta fala conforme o produto.\""
       ].join("\n"),
       tool: "IA de video",
-      duration: "1 take",
+      duration: "1 parte",
       speechLines: ["Edite esta fala conforme o produto."],
       lineTokenPrefix: "fala_",
       lineSectionTitle: "SPEECH (Portuguese BR)",
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const category = String(body.category ?? "Video");
-  const takeType = category === "Video" ? String(body.takeType ?? "1 take") : null;
-  const scriptGroup = category === "Video" ? String(body.scriptGroup ?? "Roteiro 1").trim() || "Roteiro 1" : null;
+  const takeType = category === "Video" ? String(body.takeType ?? "1-POV") : null;
+  const scriptGroup = category === "Video" ? String(body.scriptGroup ?? "Video 1").trim() || "Video 1" : null;
   const takeOrder = category === "Video" ? Number(body.takeOrder ?? 1) || 1 : null;
   const productId = String(body.productId ?? "");
   const businessId = String(body.businessId ?? "");

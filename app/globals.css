@@ -975,6 +975,15 @@ input:disabled {
   font-size: 16px;
 }
 
+.manage-subtab {
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.danger-subtab {
+  color: #9f2a1d;
+}
+
 .subtab.active {
   background: var(--dark);
   color: #fff;

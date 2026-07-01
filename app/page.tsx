@@ -66,7 +66,7 @@ type AdminUser = {
 };
 
 const categories = ["Imagem", "Video", "Copy"];
-const defaultVideoTypes = ["1 take", "2 takes", "3 takes", "+de 3 takes"];
+const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
 const customVideoTypesKey = "tikprompt-video-types";
 
@@ -84,7 +84,7 @@ function takeTypeLabel(value: string) {
 }
 
 function matchesTakeType(promptTakeType: string | null, selectedTakeType: string) {
-  const value = promptTakeType ?? "1 take";
+  const value = promptTakeType ?? defaultVideoTypes[0];
   if (selectedTakeType === "+de 3 takes") return value === "+de 3 takes" || value === "varios takes";
   return value === selectedTakeType;
 }
@@ -204,7 +204,7 @@ export default function Home() {
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Imagem");
   const [videoTakeType, setVideoTakeType] = useState(defaultVideoTypes[0]);
-  const [customVideoTypes, setCustomVideoTypes] = useState<string[]>([]);
+  const [customVideoTypes, setCustomVideoTypes] = useState<string[]>(defaultVideoTypes);
   const [view, setView] = useState<"home" | "library" | "admin" | "password">("home");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
@@ -278,10 +278,11 @@ export default function Home() {
     try {
       const storedTypes = JSON.parse(window.localStorage.getItem(customVideoTypesKey) ?? "[]");
       if (Array.isArray(storedTypes)) {
-        setCustomVideoTypes(storedTypes.filter((item): item is string => typeof item === "string" && item.trim().length > 0));
+        const validTypes = storedTypes.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+        setCustomVideoTypes(validTypes.length ? validTypes : defaultVideoTypes);
       }
     } catch {
-      setCustomVideoTypes([]);
+      setCustomVideoTypes(defaultVideoTypes);
     }
   }, []);
 
@@ -300,9 +301,9 @@ export default function Home() {
     const promptTypes =
       product?.prompts
         .filter((prompt) => prompt.category === "Video")
-        .map((prompt) => (prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType ?? "1 take")) ?? [];
+        .map((prompt) => (prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType ?? defaultVideoTypes[0])) ?? [];
 
-    return [...new Set([...defaultVideoTypes, ...promptTypes, ...customVideoTypes].filter(Boolean))];
+    return [...new Set([...customVideoTypes, ...promptTypes].filter(Boolean))];
   }, [customVideoTypes, product]);
 
   const prompts = useMemo(() => {
@@ -475,7 +476,7 @@ export default function Home() {
   }
 
   function createVideoType() {
-    const name = window.prompt("Nome do tipo de video", "Novo tipo")?.trim();
+    const name = window.prompt("Nome do tipo de vídeo", "Novo tipo")?.trim();
     if (!name) return;
 
     const exists = videoTypeOptions.some((item) => item.toLowerCase() === name.toLowerCase());
@@ -489,7 +490,72 @@ export default function Home() {
     window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypes));
     setVideoTakeType(name);
     closeEditor();
-    showToast("Tipo de video criado");
+    showToast("Tipo de vídeo criado");
+  }
+
+  async function editVideoType() {
+    if (!product || !videoTakeType) return;
+
+    const name = window.prompt("Editar tipo de vídeo", videoTakeType)?.trim();
+    if (!name || name === videoTakeType) return;
+
+    const exists = videoTypeOptions.some((item) => item.toLowerCase() === name.toLowerCase() && item !== videoTakeType);
+    if (exists) {
+      showToast("Este tipo de vídeo já existe");
+      return;
+    }
+
+    const nextTypes = customVideoTypes.map((item) => (item === videoTakeType ? name : item));
+    const finalTypes = nextTypes.includes(name) ? nextTypes : [...nextTypes, name];
+    setCustomVideoTypes(finalTypes);
+    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(finalTypes));
+
+    const promptsToUpdate = product.prompts.filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
+    await Promise.all(
+      promptsToUpdate.map((prompt) =>
+        fetch(`/api/prompts/${prompt.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...prompt, takeType: name })
+        })
+      )
+    );
+
+    setVideoTakeType(name);
+    closeEditor();
+    await loadData();
+    showToast("Tipo de vídeo atualizado");
+  }
+
+  async function deleteVideoType() {
+    if (!product || !videoTakeType) return;
+    if (videoTypeOptions.length <= 1) {
+      showToast("Mantenha pelo menos um tipo de vídeo");
+      return;
+    }
+
+    const fallbackType = videoTypeOptions.find((item) => item !== videoTakeType) ?? defaultVideoTypes[0];
+    if (!window.confirm(`Excluir o tipo "${takeTypeLabel(videoTakeType)}"? Os prompts deste tipo serao movidos para "${takeTypeLabel(fallbackType)}".`)) return;
+
+    const nextTypes = customVideoTypes.filter((item) => item !== videoTakeType);
+    setCustomVideoTypes(nextTypes);
+    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypes));
+
+    const promptsToUpdate = product.prompts.filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
+    await Promise.all(
+      promptsToUpdate.map((prompt) =>
+        fetch(`/api/prompts/${prompt.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...prompt, takeType: fallbackType })
+        })
+      )
+    );
+
+    setVideoTakeType(fallbackType);
+    closeEditor();
+    await loadData();
+    showToast("Tipo de vídeo excluído");
   }
 
   async function createPrompt() {
@@ -503,7 +569,7 @@ export default function Home() {
         businessId: business.id,
         productId: product.id,
         category,
-        takeType: category === "Video" ? videoTakeType : "1 take",
+        takeType: category === "Video" ? videoTakeType : defaultVideoTypes[0],
         scriptGroup: category === "Video" ? `Video ${nextScriptNumber}` : null,
         takeOrder: 1
       })
@@ -1215,7 +1281,7 @@ export default function Home() {
 
         {category === "Video" && (
           <section className="subtabs-row">
-            <span className="subtabs-label">Tipos de videos</span>
+            <span className="subtabs-label">Tipos de vídeos</span>
             <div className="subtabs">
               {videoTypeOptions.map((item) => (
                 <button
@@ -1229,11 +1295,17 @@ export default function Home() {
                   {takeTypeLabel(item)}
                 </button>
               ))}
-              <button className="subtab add-subtab" onClick={createVideoType} title="Criar tipo de video">
+              <button className="subtab add-subtab" onClick={createVideoType} title="Criar tipo de vídeo">
                 +
               </button>
+              <button className="subtab manage-subtab" onClick={editVideoType} disabled={!product || !videoTakeType}>
+                Editar
+              </button>
+              <button className="subtab manage-subtab danger-subtab" onClick={deleteVideoType} disabled={!product || !videoTakeType || videoTypeOptions.length <= 1}>
+                Excluir
+              </button>
             </div>
-            <span className="subtabs-note">Separe suas versoes de videos do mesmo produto.</span>
+            <span className="subtabs-note">Crie, edite e separe suas versões de vídeos do mesmo produto.</span>
           </section>
         )}
 
@@ -1303,7 +1375,7 @@ export default function Home() {
                     {draft.category === "Video" && (
                       <label className="field">
                         <span className="field-label">Tipo de video</span>
-                        <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
+                        <select value={draft.takeType ?? defaultVideoTypes[0]} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
                           {videoTypeOptions.map((item) => (
                             <option value={item} key={item}>
                               {takeTypeLabel(item)}
@@ -1374,8 +1446,8 @@ export default function Home() {
               )}
 
               <div className="editor-footer">
-                <button className="primary" onClick={() => draft && copyPrompt(draft)}>
-                  Copiar
+                <button className="primary" onClick={savePrompt}>
+                  Salvar
                 </button>
               </div>
             </section>

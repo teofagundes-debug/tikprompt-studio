@@ -62,7 +62,7 @@ export async function POST() {
         "",
         "{fala_4}\""
       ].join("\n"),
-      takeType: "1 take",
+      takeType: "1-POV",
       speechLines: [
         "Meninas, olha esse modelo que acabou de chegar.",
         "Eu gostei muito do caimento dele.",

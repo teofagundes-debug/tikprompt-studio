@@ -217,7 +217,7 @@ export default function Home() {
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Imagem");
   const [videoTakeType, setVideoTakeType] = useState(defaultVideoTypes[0]);
-  const [customVideoTypes, setCustomVideoTypes] = useState<string[]>(defaultVideoTypes);
+  const [videoTypesByBusiness, setVideoTypesByBusiness] = useState<Record<string, string[]>>({});
   const [view, setView] = useState<"home" | "library" | "admin" | "password">("home");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
@@ -290,12 +290,11 @@ export default function Home() {
   useEffect(() => {
     try {
       const storedTypes = JSON.parse(window.localStorage.getItem(customVideoTypesKey) ?? "[]");
-      if (Array.isArray(storedTypes)) {
-        const validTypes = storedTypes.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
-        setCustomVideoTypes(validTypes.length ? validTypes : defaultVideoTypes);
+      if (storedTypes && typeof storedTypes === "object" && !Array.isArray(storedTypes)) {
+        setVideoTypesByBusiness(storedTypes);
       }
     } catch {
-      setCustomVideoTypes(defaultVideoTypes);
+      setVideoTypesByBusiness({});
     }
   }, []);
 
@@ -310,14 +309,21 @@ export default function Home() {
     0
   );
 
+  const businessVideoTypes = useMemo(() => {
+    if (!business) return defaultVideoTypes;
+    const savedTypes = videoTypesByBusiness[business.id] ?? [];
+    return savedTypes.length ? savedTypes : defaultVideoTypes;
+  }, [business, videoTypesByBusiness]);
+
   const videoTypeOptions = useMemo(() => {
     const promptTypes =
-      product?.prompts
+      business?.products
+        .flatMap((item) => item.prompts)
         .filter((prompt) => prompt.category === "Video")
         .map((prompt) => (prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType ?? defaultVideoTypes[0])) ?? [];
 
-    return [...new Set([...customVideoTypes, ...promptTypes].filter(Boolean))];
-  }, [customVideoTypes, product]);
+    return [...new Set([...businessVideoTypes, ...promptTypes].filter(Boolean))];
+  }, [business, businessVideoTypes]);
 
   const prompts = useMemo(() => {
     return (
@@ -488,7 +494,16 @@ export default function Home() {
     });
   }
 
+  function saveBusinessVideoTypes(types: string[]) {
+    if (!business) return;
+    const uniqueTypes = [...new Set(types.filter(Boolean))];
+    const nextTypesByBusiness = { ...videoTypesByBusiness, [business.id]: uniqueTypes.length ? uniqueTypes : defaultVideoTypes };
+    setVideoTypesByBusiness(nextTypesByBusiness);
+    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypesByBusiness));
+  }
+
   function createVideoType() {
+    if (!business) return;
     const name = window.prompt("Nome do tipo de vídeo", "Novo tipo")?.trim();
     if (!name) return;
 
@@ -498,16 +513,14 @@ export default function Home() {
       return;
     }
 
-    const nextTypes = [...customVideoTypes, name];
-    setCustomVideoTypes(nextTypes);
-    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypes));
+    saveBusinessVideoTypes([...businessVideoTypes, name]);
     setVideoTakeType(name);
     closeEditor();
     showToast("Tipo de vídeo criado");
   }
 
   async function editVideoType() {
-    if (!product || !videoTakeType) return;
+    if (!business || !videoTakeType) return;
 
     const name = window.prompt("Editar tipo de vídeo", videoTakeType)?.trim();
     if (!name || name === videoTakeType) return;
@@ -518,12 +531,13 @@ export default function Home() {
       return;
     }
 
-    const nextTypes = customVideoTypes.map((item) => (item === videoTakeType ? name : item));
+    const nextTypes = businessVideoTypes.map((item) => (item === videoTakeType ? name : item));
     const finalTypes = nextTypes.includes(name) ? nextTypes : [...nextTypes, name];
-    setCustomVideoTypes(finalTypes);
-    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(finalTypes));
+    saveBusinessVideoTypes(finalTypes);
 
-    const promptsToUpdate = product.prompts.filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
+    const promptsToUpdate = business.products
+      .flatMap((item) => item.prompts)
+      .filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
     await Promise.all(
       promptsToUpdate.map((prompt) =>
         fetch(`/api/prompts/${prompt.id}`, {
@@ -541,7 +555,7 @@ export default function Home() {
   }
 
   async function deleteVideoType() {
-    if (!product || !videoTakeType) return;
+    if (!business || !videoTakeType) return;
     if (videoTypeOptions.length <= 1) {
       showToast("Mantenha pelo menos um tipo de vídeo");
       return;
@@ -550,11 +564,11 @@ export default function Home() {
     const fallbackType = videoTypeOptions.find((item) => item !== videoTakeType) ?? defaultVideoTypes[0];
     if (!window.confirm(`Excluir o tipo "${takeTypeLabel(videoTakeType)}"? Os prompts deste tipo serao movidos para "${takeTypeLabel(fallbackType)}".`)) return;
 
-    const nextTypes = customVideoTypes.filter((item) => item !== videoTakeType);
-    setCustomVideoTypes(nextTypes);
-    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypes));
+    saveBusinessVideoTypes(businessVideoTypes.filter((item) => item !== videoTakeType));
 
-    const promptsToUpdate = product.prompts.filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
+    const promptsToUpdate = business.products
+      .flatMap((item) => item.prompts)
+      .filter((prompt) => prompt.category === "Video" && matchesTakeType(prompt.takeType, videoTakeType));
     await Promise.all(
       promptsToUpdate.map((prompt) =>
         fetch(`/api/prompts/${prompt.id}`, {

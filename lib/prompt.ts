@@ -25,7 +25,8 @@ export function buildPromptOutput(prompt: PromptLike) {
 export function getPromptChips(prompt: PromptLike) {
   const text = `${prompt.title} ${prompt.description} ${prompt.template}`.toLowerCase();
   const category = prompt.category === "Video" ? "Vídeo" : prompt.category === "Copy" ? "Copy-postagens" : prompt.category;
-  const takeType = prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType;
+  const rawTakeType = prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType;
+  const takeType = rawTakeType?.replace(/\btakes\b/gi, "partes").replace(/\btake\b/gi, "parte");
   const chips = [category];
 
   if (prompt.tool) chips.push(prompt.tool);

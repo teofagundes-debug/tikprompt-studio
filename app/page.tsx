@@ -66,8 +66,9 @@ type AdminUser = {
 };
 
 const categories = ["Imagem", "Video", "Copy"];
-const videoTakeTypes = ["Todos", "1 take", "2 takes", "3 takes", "+de 3 takes"];
+const defaultVideoTypes = ["1 take", "2 takes", "3 takes", "+de 3 takes"];
 const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
+const customVideoTypesKey = "tikprompt-video-types";
 
 function categoryLabel(value: string) {
   return value === "Video" ? "Vídeo" : value;
@@ -78,12 +79,12 @@ function categoryTabLabel(value: string) {
 }
 
 function takeTypeLabel(value: string) {
-  return value === "varios takes" ? "+de 3 takes" : value;
+  const normalized = value === "varios takes" ? "+de 3 takes" : value;
+  return normalized.replace(/\btakes\b/gi, "partes").replace(/\btake\b/gi, "parte");
 }
 
 function matchesTakeType(promptTakeType: string | null, selectedTakeType: string) {
   const value = promptTakeType ?? "1 take";
-  if (selectedTakeType === "Todos") return true;
   if (selectedTakeType === "+de 3 takes") return value === "+de 3 takes" || value === "varios takes";
   return value === selectedTakeType;
 }
@@ -98,14 +99,18 @@ function inferTakeOrder(title: string) {
   if (normalized.startsWith("gatilho")) return 1;
   if (normalized.startsWith("interesse")) return 2;
   if (normalized.startsWith("cta")) return 3;
-  const match = normalized.match(/take\s*(\d+)/);
+  const match = normalized.match(/(?:take|parte)\s*(\d+)/);
   return match ? Number(match[1]) : 99;
 }
 
 function scriptGroupForPrompt(prompt: Prompt) {
   if (prompt.scriptGroup) return prompt.scriptGroup;
   const scriptNumber = inferScriptNumber(prompt.title);
-  return scriptNumber ? `Roteiro ${scriptNumber}` : "Roteiro sem grupo";
+  return scriptNumber ? `Video ${scriptNumber}` : "Video sem grupo";
+}
+
+function scriptGroupLabel(value: string) {
+  return value.replace(/^Roteiro/i, "Video");
 }
 
 function takeOrderForPrompt(prompt: Prompt) {
@@ -198,7 +203,8 @@ export default function Home() {
   const [businessId, setBusinessId] = useState("");
   const [productId, setProductId] = useState("");
   const [category, setCategory] = useState("Imagem");
-  const [videoTakeType, setVideoTakeType] = useState("Todos");
+  const [videoTakeType, setVideoTakeType] = useState(defaultVideoTypes[0]);
+  const [customVideoTypes, setCustomVideoTypes] = useState<string[]>([]);
   const [view, setView] = useState<"home" | "library" | "admin" | "password">("home");
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
@@ -268,6 +274,17 @@ export default function Home() {
     loadAuth();
   }, []);
 
+  useEffect(() => {
+    try {
+      const storedTypes = JSON.parse(window.localStorage.getItem(customVideoTypesKey) ?? "[]");
+      if (Array.isArray(storedTypes)) {
+        setCustomVideoTypes(storedTypes.filter((item): item is string => typeof item === "string" && item.trim().length > 0));
+      }
+    } catch {
+      setCustomVideoTypes([]);
+    }
+  }, []);
+
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
   const product = business?.products.find((item) => item.id === productId) ?? business?.products[0];
   const totalProducts = businesses.reduce((sum, item) => sum + item.products.length, 0);
@@ -278,6 +295,15 @@ export default function Home() {
       item.products.reduce((productSum, current) => productSum + current.prompts.filter((prompt) => prompt.category === "Video").length, 0),
     0
   );
+
+  const videoTypeOptions = useMemo(() => {
+    const promptTypes =
+      product?.prompts
+        .filter((prompt) => prompt.category === "Video")
+        .map((prompt) => (prompt.takeType === "varios takes" ? "+de 3 takes" : prompt.takeType ?? "1 take")) ?? [];
+
+    return [...new Set([...defaultVideoTypes, ...promptTypes, ...customVideoTypes].filter(Boolean))];
+  }, [customVideoTypes, product]);
 
   const prompts = useMemo(() => {
     return (
@@ -312,6 +338,12 @@ export default function Home() {
       setProductId(business.products[0]?.id ?? "");
     }
   }, [business, businessId, businesses, product, productId]);
+
+  useEffect(() => {
+    if (category === "Video" && videoTypeOptions.length && !videoTypeOptions.includes(videoTakeType)) {
+      setVideoTakeType(videoTypeOptions[0]);
+    }
+  }, [category, videoTakeType, videoTypeOptions]);
 
   useEffect(() => {
     if (prompts.length && !prompts.some((prompt) => prompt.id === promptId)) {
@@ -442,6 +474,24 @@ export default function Home() {
     });
   }
 
+  function createVideoType() {
+    const name = window.prompt("Nome do tipo de video", "Novo tipo")?.trim();
+    if (!name) return;
+
+    const exists = videoTypeOptions.some((item) => item.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      setVideoTakeType(videoTypeOptions.find((item) => item.toLowerCase() === name.toLowerCase()) ?? name);
+      return;
+    }
+
+    const nextTypes = [...customVideoTypes, name];
+    setCustomVideoTypes(nextTypes);
+    window.localStorage.setItem(customVideoTypesKey, JSON.stringify(nextTypes));
+    setVideoTakeType(name);
+    closeEditor();
+    showToast("Tipo de video criado");
+  }
+
   async function createPrompt() {
     if (!business || !product) return;
     const nextScriptNumber = promptGroups.length + 1;
@@ -449,12 +499,12 @@ export default function Home() {
     const response = await fetch("/api/prompts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+        body: JSON.stringify({
         businessId: business.id,
         productId: product.id,
         category,
-        takeType: category === "Video" && videoTakeType !== "Todos" ? videoTakeType : "1 take",
-        scriptGroup: category === "Video" ? `Roteiro ${nextScriptNumber}` : null,
+        takeType: category === "Video" ? videoTakeType : "1 take",
+        scriptGroup: category === "Video" ? `Video ${nextScriptNumber}` : null,
         takeOrder: 1
       })
     });
@@ -517,12 +567,12 @@ export default function Home() {
     const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(data.error ?? "Não foi possível duplicar o roteiro");
+      showToast(data.error ?? "Nao foi possivel duplicar o video");
       return;
     }
 
     await loadData();
-    showToast("Roteiro duplicado");
+    showToast("Video duplicado");
   }
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -606,7 +656,7 @@ export default function Home() {
     setBusinessId(businessItem.id);
     setProductId(businessItem.products[0]?.id ?? "");
     setCategory("Imagem");
-    setVideoTakeType("Todos");
+    setVideoTakeType(defaultVideoTypes[0]);
     setView("library");
     closeEditor();
   }
@@ -709,7 +759,7 @@ export default function Home() {
               {chip}
             </span>
           ))}
-          {prompt.category === "Video" && <span className="chip strong-chip">{`${scriptGroupForPrompt(prompt)} • Take ${takeOrderForPrompt(prompt)}`}</span>}
+          {prompt.category === "Video" && <span className="chip strong-chip">{`${scriptGroupLabel(scriptGroupForPrompt(prompt))} - Parte ${takeOrderForPrompt(prompt)}`}</span>}
         </div>
         <div className="prompt-actions">
           <button className="prompt-action copy" onClick={() => copyPrompt(prompt)}>
@@ -719,7 +769,7 @@ export default function Home() {
             className="prompt-action"
             onClick={() => {
               setPromptId(prompt.id);
-              setDraft(normalizePromptForEditor({ ...structuredClone(prompt), scriptGroup: scriptGroupForPrompt(prompt), takeOrder: takeOrderForPrompt(prompt) }));
+              setDraft(normalizePromptForEditor({ ...structuredClone(prompt), scriptGroup: scriptGroupLabel(scriptGroupForPrompt(prompt)), takeOrder: takeOrderForPrompt(prompt) }));
               setEditorOpen(true);
             }}
           >
@@ -999,7 +1049,7 @@ export default function Home() {
                   className="primary"
                   onClick={() => {
                     setCategory("Imagem");
-                    setVideoTakeType("Todos");
+                    setVideoTakeType(defaultVideoTypes[0]);
                     setView("library");
                   }}
                 >
@@ -1056,7 +1106,7 @@ export default function Home() {
                   <span />
                 </div>
                 <strong>Vídeo 01</strong>
-                <span>Take + fala + copy</span>
+                <span>Parte + fala + copy</span>
               </div>
               <div className="creative-socials">
                 <span className="social-logo tiktok">TikTok</span>
@@ -1080,8 +1130,8 @@ export default function Home() {
                 <p>Cada negócio tem sua própria estrutura de produtos. Você cria uma vez, organiza do seu jeito e acessa sem confusão.</p>
               </article>
               <article className="welcome-card">
-                <h2>Roteiros com takes numerados</h2>
-                <p>Produza vídeos com consistência usando takes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
+                <h2>Videos com partes numeradas</h2>
+                <p>Produza videos com consistencia usando partes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
               </article>
               <article className="welcome-card">
                 <h2>Copies prontas para copiar</h2>
@@ -1148,7 +1198,7 @@ export default function Home() {
                 key={item}
                 onClick={() => {
                   setCategory(item);
-                  if (item !== "Video") setVideoTakeType("Todos");
+                  if (item === "Video" && videoTypeOptions.length) setVideoTakeType(videoTypeOptions[0]);
                   closeEditor();
                 }}
               >
@@ -1165,8 +1215,9 @@ export default function Home() {
 
         {category === "Video" && (
           <section className="subtabs-row">
+            <span className="subtabs-label">Tipos de videos</span>
             <div className="subtabs">
-              {videoTakeTypes.map((item) => (
+              {videoTypeOptions.map((item) => (
                 <button
                   className={`subtab ${item === videoTakeType ? "active" : ""}`}
                   key={item}
@@ -1178,8 +1229,11 @@ export default function Home() {
                   {takeTypeLabel(item)}
                 </button>
               ))}
+              <button className="subtab add-subtab" onClick={createVideoType} title="Criar tipo de video">
+                +
+              </button>
             </div>
-            <span className="subtabs-note">Separe versões do mesmo produto por take e salve as copies como cards.</span>
+            <span className="subtabs-note">Separe suas versoes de videos do mesmo produto.</span>
           </section>
         )}
 
@@ -1205,11 +1259,11 @@ export default function Home() {
                   <section className="script-group" key={group.scriptGroup}>
                     <div className="script-group-head">
                       <div>
-                        <h3>{group.scriptGroup}</h3>
-                        <span>{group.prompts.length} takes neste roteiro</span>
+                        <h3>{scriptGroupLabel(group.scriptGroup)}</h3>
+                        <span>{group.prompts.length} partes neste video</span>
                       </div>
                       <button className="secondary" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
-                        Duplicar roteiro
+                        Duplicar video
                       </button>
                     </div>
                     <div className="script-group-grid">{group.prompts.map((prompt) => renderPromptCard(prompt))}</div>
@@ -1248,24 +1302,25 @@ export default function Home() {
                     </label>
                     {draft.category === "Video" && (
                       <label className="field">
-                        <span className="field-label">Take</span>
+                        <span className="field-label">Tipo de video</span>
                         <select value={draft.takeType ?? "1 take"} onChange={(event) => setDraft({ ...draft, takeType: event.target.value })}>
-                          <option value="1 take">1 take</option>
-                          <option value="2 takes">2 takes</option>
-                          <option value="3 takes">3 takes</option>
-                          <option value="+de 3 takes">+de 3 takes</option>
+                          {videoTypeOptions.map((item) => (
+                            <option value={item} key={item}>
+                              {takeTypeLabel(item)}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     )}
                     {draft.category === "Video" && (
                       <label className="field">
-                        <span className="field-label">Roteiro / grupo</span>
-                        <input value={draft.scriptGroup ?? ""} onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })} placeholder="Ex: Roteiro 1" />
+                        <span className="field-label">Video / grupo</span>
+                        <input value={draft.scriptGroup ?? ""} onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })} placeholder="Ex: Video 1" />
                       </label>
                     )}
                     {draft.category === "Video" && (
                       <label className="field">
-                        <span className="field-label">Ordem do take</span>
+                        <span className="field-label">Ordem da parte</span>
                         <input
                           value={draft.takeOrder ?? ""}
                           onChange={(event) => setDraft({ ...draft, takeOrder: Number(event.target.value) || null })}

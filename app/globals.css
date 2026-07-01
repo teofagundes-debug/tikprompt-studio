@@ -950,6 +950,12 @@ input:disabled {
   border-radius: var(--radius);
 }
 
+.subtabs-label {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .subtab {
   min-height: 30px;
   border: 0;
@@ -959,6 +965,14 @@ input:disabled {
   padding: 0 10px;
   font-size: 12px;
   font-weight: 850;
+}
+
+.add-subtab {
+  min-width: 30px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-size: 16px;
 }
 
 .subtab.active {
@@ -1260,6 +1274,7 @@ textarea {
 }
 
 .speech-card {
+  order: -1;
   border: 1px solid rgba(212, 157, 64, 0.62);
   border-radius: var(--radius);
   background: #17130c;

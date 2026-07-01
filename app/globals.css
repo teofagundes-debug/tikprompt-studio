@@ -1080,14 +1080,44 @@ input:disabled {
 }
 
 .script-group {
-  border: 1px solid var(--line);
+  border: 1px solid var(--script-border, var(--line));
   border-radius: var(--radius);
-  background: #fbfcfc;
+  background: var(--script-bg, #fbfcfc);
   padding: 8px;
   display: grid;
   align-content: start;
   align-self: start;
   gap: 8px;
+}
+
+.script-group:nth-child(6n + 1) {
+  --script-bg: #f2fbf8;
+  --script-border: #b8ddd4;
+}
+
+.script-group:nth-child(6n + 2) {
+  --script-bg: #fff8e8;
+  --script-border: #efd08b;
+}
+
+.script-group:nth-child(6n + 3) {
+  --script-bg: #f4f1ff;
+  --script-border: #cabdec;
+}
+
+.script-group:nth-child(6n + 4) {
+  --script-bg: #eef7ff;
+  --script-border: #add1ee;
+}
+
+.script-group:nth-child(6n + 5) {
+  --script-bg: #fff1ef;
+  --script-border: #efb8ae;
+}
+
+.script-group:nth-child(6n + 6) {
+  --script-bg: #f3f8e8;
+  --script-border: #c7d99a;
 }
 
 .script-group-head {

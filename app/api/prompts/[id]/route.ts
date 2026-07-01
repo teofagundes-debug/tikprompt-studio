@@ -4,6 +4,14 @@ import { requireUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
+function normalizeScriptGroup(value: string) {
+  return value
+    .trim()
+    .replace(/^Roteiro/i, "Video")
+    .replace(/\s*[-–—]\s*(?:Take|Parte)\s*\d+\s*$/i, "")
+    .trim();
+}
+
 export async function PATCH(request: Request, { params }: Params) {
   const { user, response } = await requireUser();
   if (response || !user) return response;
@@ -19,7 +27,7 @@ export async function PATCH(request: Request, { params }: Params) {
       description: body.description,
       template: body.template,
       takeType: body.category === "Video" ? body.takeType ?? "1-POV" : null,
-      scriptGroup: body.category === "Video" ? String(body.scriptGroup ?? "").trim() || null : null,
+      scriptGroup: body.category === "Video" ? normalizeScriptGroup(String(body.scriptGroup ?? "")) || null : null,
       takeOrder: body.category === "Video" ? Number(body.takeOrder ?? 0) || null : null,
       speechLines: body.speechLines ?? []
     }

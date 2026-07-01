@@ -104,13 +104,26 @@ function inferTakeOrder(title: string) {
 }
 
 function scriptGroupForPrompt(prompt: Prompt) {
-  if (prompt.scriptGroup) return prompt.scriptGroup;
+  if (prompt.scriptGroup) return normalizeScriptGroup(prompt.scriptGroup);
   const scriptNumber = inferScriptNumber(prompt.title);
   return scriptNumber ? `Video ${scriptNumber}` : "Video sem grupo";
 }
 
 function scriptGroupLabel(value: string) {
-  return value.replace(/^Roteiro/i, "Video");
+  return normalizeScriptGroup(value).replace(/^Roteiro/i, "Video");
+}
+
+function normalizeScriptGroup(value: string) {
+  const normalized = value.trim().replace(/^Roteiro/i, "Video");
+  return normalized.replace(/\s*[-–—]\s*(?:Take|Parte)\s*\d+\s*$/i, "").trim() || "Video sem grupo";
+}
+
+function parseScriptGroupInput(value: string, currentTakeOrder: number | null) {
+  const takeMatch = value.match(/(?:Take|Parte)\s*(\d+)\s*$/i);
+  return {
+    scriptGroup: normalizeScriptGroup(value),
+    takeOrder: takeMatch ? Number(takeMatch[1]) : currentTakeOrder
+  };
 }
 
 function takeOrderForPrompt(prompt: Prompt) {
@@ -585,10 +598,12 @@ export default function Home() {
 
   async function savePrompt() {
     if (!draft) return;
+    const parsedGroup = draft.category === "Video" ? parseScriptGroupInput(draft.scriptGroup ?? "", draft.takeOrder) : null;
+    const payload = parsedGroup ? { ...draft, scriptGroup: parsedGroup.scriptGroup, takeOrder: parsedGroup.takeOrder } : draft;
     const response = await fetch(`/api/prompts/${draft.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft)
+      body: JSON.stringify(payload)
     });
     const data = await readJson(response);
 
@@ -1387,7 +1402,11 @@ export default function Home() {
                     {draft.category === "Video" && (
                       <label className="field">
                         <span className="field-label">Video / grupo</span>
-                        <input value={draft.scriptGroup ?? ""} onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })} placeholder="Ex: Video 1" />
+                        <input
+                          value={draft.scriptGroup ?? ""}
+                          onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })}
+                          placeholder="Ex: Video 1"
+                        />
                       </label>
                     )}
                     {draft.category === "Video" && (

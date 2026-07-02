@@ -159,6 +159,14 @@ export default function LandingPage() {
         </div>
         <Link className="landing-primary" href="/">Entrar no TikPrompt Studio</Link>
       </section>
+
+      <footer className="landing-footer">
+        <div>
+          <strong>Escala Vendas Ltda</strong>
+          <span>CNPJ: 60.328.666/0001-03</span>
+        </div>
+        <a href="mailto:suporte_tikprompt@escalavendas.com.br">suporte_tikprompt@escalavendas.com.br</a>
+      </footer>
     </main>
   );
 }

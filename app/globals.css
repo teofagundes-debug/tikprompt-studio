@@ -1977,9 +1977,38 @@ textarea {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.landing-footer {
+  border-top: 1px solid var(--line);
+  margin: 0 clamp(18px, 5vw, 72px);
+  padding: 20px 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.landing-footer strong,
+.landing-footer span {
+  display: block;
+}
+
+.landing-footer strong {
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.landing-footer a {
+  color: #075f57;
+  font-weight: 850;
+  text-decoration: none;
+}
+
 @media (max-width: 940px) {
   .landing-nav,
-  .landing-final {
+  .landing-final,
+  .landing-footer {
     align-items: stretch;
     flex-direction: column;
   }

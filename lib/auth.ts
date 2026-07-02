@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isSubscriptionActive, subscriptionStatus } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 
 export type SessionUser = {
@@ -10,6 +11,10 @@ export type SessionUser = {
   role: string;
   status: string;
   forcePasswordChange: boolean;
+  plan: string | null;
+  activatedAt: Date | null;
+  expiresAt: Date | null;
+  lastPaymentAt: Date | null;
 };
 
 const cookieName = "tikprompt_session";
@@ -104,11 +109,16 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       email: true,
       role: true,
       status: true,
-      forcePasswordChange: true
+      forcePasswordChange: true,
+      plan: true,
+      activatedAt: true,
+      expiresAt: true,
+      lastPaymentAt: true
     }
   });
 
   if (!user || user.status !== "ACTIVE") return null;
+  if (user.role !== "ADMIN" && !isSubscriptionActive(user.expiresAt)) return null;
   return user;
 }
 
@@ -138,6 +148,11 @@ export function publicUser(user: SessionUser) {
     email: user.email,
     role: user.role,
     status: user.status,
-    forcePasswordChange: user.forcePasswordChange
+    forcePasswordChange: user.forcePasswordChange,
+    plan: user.plan,
+    activatedAt: user.activatedAt,
+    expiresAt: user.expiresAt,
+    lastPaymentAt: user.lastPaymentAt,
+    subscriptionStatus: subscriptionStatus(user.expiresAt)
   };
 }

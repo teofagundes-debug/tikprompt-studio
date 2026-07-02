@@ -48,6 +48,11 @@ type CurrentUser = {
   role: string;
   status: string;
   forcePasswordChange: boolean;
+  plan: string | null;
+  activatedAt: string | null;
+  expiresAt: string | null;
+  lastPaymentAt: string | null;
+  subscriptionStatus: string;
 };
 
 type AdminUser = {
@@ -59,6 +64,9 @@ type AdminUser = {
   status: string;
   plan: string | null;
   paymentId: string | null;
+  activatedAt: string | null;
+  expiresAt: string | null;
+  lastPaymentAt: string | null;
   forcePasswordChange: boolean;
   lastLoginAt: string | null;
   createdAt: string;
@@ -199,6 +207,37 @@ function syncSpeechSection(template: string, speechLines: string[]) {
   const sectionEnd = nextDivider >= 0 ? afterHeader + nextDivider : template.length;
 
   return `${template.slice(0, sectionStart)}${speechSection}${template.slice(sectionEnd)}`;
+}
+
+function toDateInput(value?: string | null) {
+  if (!value) return "";
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
+}
+
+function daysUntil(value?: string | null) {
+  if (!value) return null;
+  const today = new Date();
+  const expires = new Date(value);
+  today.setHours(0, 0, 0, 0);
+  expires.setHours(0, 0, 0, 0);
+  return Math.ceil((expires.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+function subscriptionInfo(user: { expiresAt: string | null; plan?: string | null; subscriptionStatus?: string }) {
+  if (!user.expiresAt) {
+    return { label: user.plan ? `Ativo - ${user.plan}` : "Ativo", tone: "active" };
+  }
+
+  const remaining = daysUntil(user.expiresAt);
+  const date = formatDate(user.expiresAt);
+  if (remaining !== null && remaining < 0) return { label: `Vencido em ${date}`, tone: "expired" };
+  if (remaining !== null && remaining <= 5) return { label: `Vence em ${remaining} dias - ${date}`, tone: "warning" };
+  return { label: `Ativo até ${date}`, tone: "active" };
 }
 
 function normalizePromptForEditor(prompt: Prompt) {
@@ -829,16 +868,22 @@ export default function Home() {
   }
 
   async function editAdminUser(user: AdminUser) {
-    const name = window.prompt("Nome do usuário", user.name)?.trim();
+    const name = window.prompt("Nome do usuario", user.name)?.trim();
     if (!name) return;
 
-    const email = window.prompt("Email do usuário", user.email)?.trim();
+    const email = window.prompt("Email do usuario", user.email)?.trim();
     if (!email) return;
+
+    const plan = window.prompt("Plano (mensal, trimestral ou semestral)", user.plan ?? "mensal")?.trim();
+    if (!plan) return;
+
+    const expiresAt = window.prompt("Vencimento (AAAA-MM-DD)", toDateInput(user.expiresAt))?.trim();
+    if (!expiresAt) return;
 
     const response = await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email })
+      body: JSON.stringify({ name, email, plan, expiresAt })
     });
     const data = await readJson(response);
 
@@ -1049,6 +1094,7 @@ export default function Home() {
         <section className="user-box">
           <strong>{currentUser.name}</strong>
           <span>{currentUser.email}</span>
+          <span className={`subscription-pill ${subscriptionInfo(currentUser).tone}`}>{subscriptionInfo(currentUser).label}</span>
           <div className="user-actions">
             {currentUser.role === "ADMIN" && (
               <button onClick={openAdmin}>
@@ -1118,7 +1164,7 @@ export default function Home() {
                 </label>
                 <label className="field">
                   <span className="field-label">Plano</span>
-                  <input value={newUserPlan} onChange={(event) => setNewUserPlan(event.target.value)} placeholder="Mensal" />
+                  <input value={newUserPlan} onChange={(event) => setNewUserPlan(event.target.value)} placeholder="mensal, trimestral ou semestral" />
                 </label>
                 <button className="primary" type="submit">
                   Criar acesso
@@ -1142,6 +1188,10 @@ export default function Home() {
                         <small>
                           {user.role} - {user.status} - {user._count.businesses} negócios
                         </small>
+                        <small>
+                          Plano {user.plan ?? "mensal"} - {subscriptionInfo(user).label}
+                        </small>
+                        {user.lastPaymentAt && <small>Ultimo pagamento em {formatDate(user.lastPaymentAt)}</small>}
                       </div>
                       <div className="user-card-actions">
                         <button className="secondary" onClick={() => editAdminUser(user)}>

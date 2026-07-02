@@ -127,6 +127,33 @@ input:disabled {
   text-overflow: ellipsis;
 }
 
+.subscription-pill {
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.user-box .subscription-pill.active {
+  background: rgba(29, 178, 115, 0.18);
+  color: #a9f4cb;
+  border: 1px solid rgba(29, 178, 115, 0.35);
+}
+
+.user-box .subscription-pill.warning {
+  background: rgba(226, 169, 58, 0.18);
+  color: #ffe0a6;
+  border: 1px solid rgba(226, 169, 58, 0.36);
+}
+
+.user-box .subscription-pill.expired {
+  background: rgba(214, 67, 56, 0.2);
+  color: #ffc5bf;
+  border: 1px solid rgba(214, 67, 56, 0.38);
+}
+
 .user-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

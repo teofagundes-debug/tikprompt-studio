@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nextExpiration, normalizePlan } from "@/lib/billing";
 import { generateTemporaryPassword, hashPassword, normalizeEmail, requireAdmin } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +14,9 @@ function userSelect() {
     status: true,
     plan: true,
     paymentId: true,
+    activatedAt: true,
+    expiresAt: true,
+    lastPaymentAt: true,
     forcePasswordChange: true,
     lastLoginAt: true,
     createdAt: true,
@@ -42,12 +46,19 @@ export async function POST(request: Request) {
   const email = normalizeEmail(String(body.email ?? ""));
   const name = String(body.name ?? email).trim() || email;
   const phone = String(body.phone ?? "").trim() || null;
-  const plan = String(body.plan ?? "").trim() || null;
+  const plan = normalizePlan(String(body.plan ?? "").trim() || null);
   const password = generateTemporaryPassword();
+  const now = new Date();
 
   if (!email) {
     return NextResponse.json({ error: "Informe o email do usuário." }, { status: 400 });
   }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { activatedAt: true, expiresAt: true }
+  });
+  const expiresAt = nextExpiration(existingUser?.expiresAt, plan);
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -55,6 +66,9 @@ export async function POST(request: Request) {
       name,
       phone,
       plan,
+      activatedAt: existingUser?.activatedAt ?? now,
+      expiresAt,
+      lastPaymentAt: now,
       status: "ACTIVE",
       passwordHash: hashPassword(password),
       forcePasswordChange: true
@@ -64,6 +78,9 @@ export async function POST(request: Request) {
       email,
       phone,
       plan,
+      activatedAt: now,
+      expiresAt,
+      lastPaymentAt: now,
       role: "USER",
       status: "ACTIVE",
       passwordHash: hashPassword(password),

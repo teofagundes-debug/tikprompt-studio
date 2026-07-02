@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSubscriptionActive } from "@/lib/billing";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { hashPassword, normalizeEmail, publicUser, setSessionCookie, verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -43,6 +44,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email ou senha inválidos." }, { status: 401 });
     }
 
+    if (user.role !== "ADMIN" && !isSubscriptionActive(user.expiresAt)) {
+      return NextResponse.json({ error: "Sua assinatura venceu. Entre em contato para renovar o acesso." }, { status: 403 });
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() }
@@ -56,7 +61,11 @@ export async function POST(request: Request) {
         email: user.email,
         role: user.role,
         status: user.status,
-        forcePasswordChange: user.forcePasswordChange
+        forcePasswordChange: user.forcePasswordChange,
+        plan: user.plan,
+        activatedAt: user.activatedAt,
+        expiresAt: user.expiresAt,
+        lastPaymentAt: user.lastPaymentAt
       })
     });
   } catch (error) {

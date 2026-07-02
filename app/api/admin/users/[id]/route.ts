@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { normalizePlan } from "@/lib/billing";
 import { generateTemporaryPassword, hashPassword, normalizeEmail, requireAdmin } from "@/lib/auth";
+import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
@@ -14,6 +16,9 @@ function userSelect() {
     status: true,
     plan: true,
     paymentId: true,
+    activatedAt: true,
+    expiresAt: true,
+    lastPaymentAt: true,
     forcePasswordChange: true,
     lastLoginAt: true,
     createdAt: true,
@@ -22,6 +27,7 @@ function userSelect() {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  await ensureDatabaseSchema();
   const { user: admin, response } = await requireAdmin();
   if (response || !admin) return response;
 
@@ -58,7 +64,9 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(body.name ? { name: String(body.name) } : {}),
       ...(body.email ? { email: normalizeEmail(String(body.email)) } : {}),
       ...(body.phone !== undefined ? { phone: String(body.phone || "") || null } : {}),
-      ...(body.plan !== undefined ? { plan: String(body.plan || "") || null } : {}),
+      ...(body.plan !== undefined ? { plan: normalizePlan(String(body.plan || "") || null) } : {}),
+      ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null } : {}),
+      ...(body.activatedAt !== undefined ? { activatedAt: body.activatedAt ? new Date(String(body.activatedAt)) : null } : {}),
       ...(body.status ? { status: String(body.status) } : {}),
       ...(body.role ? { role: String(body.role) } : {})
     },
@@ -69,6 +77,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
+  await ensureDatabaseSchema();
   const { user: admin, response } = await requireAdmin();
   if (response || !admin) return response;
 

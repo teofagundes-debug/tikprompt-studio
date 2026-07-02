@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nextExpiration, normalizePlan } from "@/lib/billing";
 import { generateTemporaryPassword, hashPassword, normalizeEmail } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
@@ -35,9 +36,15 @@ export async function POST(request: Request) {
 
   const name = String(body.name ?? body.nome ?? email).trim() || email;
   const phone = String(body.phone ?? body.telefone ?? "").trim() || null;
-  const plan = String(body.plan ?? body.plano ?? "").trim() || null;
+  const plan = normalizePlan(String(body.plan ?? body.plano ?? "").trim() || null);
   const paymentId = String(body.paymentId ?? body.pixId ?? body.id ?? "").trim() || null;
-  const temporaryPassword = generateTemporaryPassword();
+  const now = new Date();
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { activatedAt: true, expiresAt: true }
+  });
+  const temporaryPassword = existingUser ? null : generateTemporaryPassword();
+  const expiresAt = nextExpiration(existingUser?.expiresAt, plan);
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -46,9 +53,11 @@ export async function POST(request: Request) {
       phone,
       plan,
       paymentId,
+      activatedAt: existingUser?.activatedAt ?? now,
+      expiresAt,
+      lastPaymentAt: now,
       status: "ACTIVE",
-      passwordHash: hashPassword(temporaryPassword),
-      forcePasswordChange: true
+      ...(temporaryPassword ? { passwordHash: hashPassword(temporaryPassword), forcePasswordChange: true } : {})
     },
     create: {
       name,
@@ -56,9 +65,12 @@ export async function POST(request: Request) {
       phone,
       plan,
       paymentId,
+      activatedAt: now,
+      expiresAt,
+      lastPaymentAt: now,
       role: "USER",
       status: "ACTIVE",
-      passwordHash: hashPassword(temporaryPassword),
+      passwordHash: hashPassword(temporaryPassword ?? generateTemporaryPassword()),
       forcePasswordChange: true
     },
     select: {
@@ -67,6 +79,9 @@ export async function POST(request: Request) {
       email: true,
       phone: true,
       plan: true,
+      activatedAt: true,
+      expiresAt: true,
+      lastPaymentAt: true,
       status: true,
       forcePasswordChange: true
     }

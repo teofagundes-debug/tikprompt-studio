@@ -32,6 +32,9 @@ export async function ensureDatabaseSchema() {
       "forcePasswordChange" BOOLEAN NOT NULL DEFAULT true,
       "plan" TEXT,
       "paymentId" TEXT,
+      "activatedAt" TIMESTAMP(3),
+      "expiresAt" TIMESTAMP(3),
+      "lastPaymentAt" TIMESTAMP(3),
       "lastLoginAt" TIMESTAMP(3),
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -88,8 +91,12 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_scriptGroup_idx" ON "Prompt"("scriptGroup");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "activatedAt" TIMESTAMP(3);`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastPaymentAt" TIMESTAMP(3);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_role_idx" ON "User"("role");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status");`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_expiresAt_idx" ON "User"("expiresAt");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Business_userId_idx" ON "Business"("userId");`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = '1-POV' WHERE "category" = 'Video' AND "takeType" IS NULL;`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = 'varios takes' WHERE "takeType" = '3 takes';`);

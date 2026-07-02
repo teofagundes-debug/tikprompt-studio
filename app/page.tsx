@@ -1286,64 +1286,67 @@ export default function Home() {
           </label>
         </header>
 
-        <section className="product-row">
-          <div className="product-selector">
-            <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
-            <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
-              <span>
-                <strong>{product?.name ?? "Nenhum produto"}</strong>
-                <small>{business.products.length} produtos cadastrados</small>
-              </span>
-              <span className="product-current-arrow">v</span>
-            </button>
-          </div>
-          <label className="field">
-            <span className="field-label">Editar nome</span>
-            <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
-          </label>
-          <div className="action-row">
-            <button className="secondary" onClick={createProduct}>
-              Criar produto
-            </button>
-            <button className="secondary" onClick={duplicateProduct} disabled={!product}>
-              Duplicar
-            </button>
-            <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
-              Excluir
-            </button>
-          </div>
-        </section>
-
-        {productPickerOpen && (
-          <section className="product-picker">
-            <div className="product-picker-head">
-              <div>
-                <h2>Produtos</h2>
-                <span>{filteredProducts.length} encontrados em {business.name}</span>
-              </div>
-              <label className="product-picker-search">
-                Buscar produto
-                <input value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder="Nome do produto" />
-              </label>
+        <div className="product-zone">
+          <section className="product-row">
+            <div className="product-selector">
+              <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
+              <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
+                <span>
+                  <strong>{product?.name ?? "Nenhum produto"}</strong>
+                  <small>{business.products.length} produtos cadastrados</small>
+                </span>
+                <span className="product-current-arrow">v</span>
+              </button>
             </div>
-            <div className="product-card-grid">
-              {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
-              {filteredProducts.map((item) => (
-                <button
-                  className={`product-card ${item.id === product?.id ? "active" : ""}`}
-                  key={item.id}
-                  onClick={() => {
-                    setProductId(item.id);
-                    setProductPickerOpen(false);
-                    closeEditor();
-                  }}
-                >
-                  <strong>{item.name}</strong>
-                </button>
-              ))}
+            <label className="field">
+              <span className="field-label">Editar nome</span>
+              <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
+            </label>
+            <div className="action-row">
+              <button className="secondary" onClick={createProduct}>
+                Criar produto
+              </button>
+              <button className="secondary" onClick={duplicateProduct} disabled={!product}>
+                Duplicar
+              </button>
+              <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
+                Excluir
+              </button>
             </div>
           </section>
-        )}
+
+          {productPickerOpen && (
+            <section className="product-picker">
+              <div className="product-picker-head">
+                <div>
+                  <h2>Produtos</h2>
+                  <span>{filteredProducts.length} encontrados em {business.name}</span>
+                </div>
+                <label className="product-picker-search">
+                  Buscar produto
+                  <input value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder="Nome do produto" />
+                </label>
+              </div>
+              <div className="product-card-grid">
+                {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
+                {filteredProducts.map((item) => (
+                  <button
+                    className={`product-card ${item.id === product?.id ? "active" : ""}`}
+                    key={item.id}
+                    onClick={() => {
+                      setProductId(item.id);
+                      setProductPickerOpen(false);
+                      setProductSearch("");
+                      closeEditor();
+                    }}
+                  >
+                    <strong>{item.name}</strong>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
 
         <section className="tabs-row">
           <div className="tabs">

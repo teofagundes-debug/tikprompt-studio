@@ -863,6 +863,11 @@ input:disabled {
   padding: 12px 24px 0;
 }
 
+.product-zone {
+  position: relative;
+  z-index: 10;
+}
+
 .tabs-row {
   grid-template-columns: minmax(0, 1fr) auto;
 }
@@ -977,12 +982,17 @@ input:disabled {
 }
 
 .product-picker {
-  margin: 8px 24px 0;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 24px;
+  right: 24px;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
   overflow: hidden;
+  z-index: 30;
 }
 
 .product-picker-head {
@@ -1527,7 +1537,8 @@ textarea {
   }
 
   .product-picker {
-    margin-inline: 14px;
+    left: 14px;
+    right: 14px;
   }
 
   .product-picker-head {

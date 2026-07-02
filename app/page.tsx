@@ -358,10 +358,6 @@ export default function Home() {
     return business?.products.filter((item) => item.name.toLowerCase().includes(query)) ?? [];
   }, [business, productSearch]);
 
-  function productPromptCount(item: Product, promptCategory?: string) {
-    return promptCategory ? item.prompts.filter((prompt) => prompt.category === promptCategory).length : item.prompts.length;
-  }
-
   const prompts = useMemo(() => {
     return (
       product?.prompts.filter((prompt) => {
@@ -1292,13 +1288,16 @@ export default function Home() {
 
         <section className="product-row">
           <div className="product-selector">
-            <span className="field-label">Produto atual</span>
+            <span className="field-label">Escolha aqui o produto</span>
             <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
               <span>
                 <strong>{product?.name ?? "Nenhum produto"}</strong>
                 <small>{business.products.length} produtos cadastrados</small>
               </span>
-              <span className="product-current-count">{product?.prompts.length ?? 0}</span>
+              <span className="product-current-meta">
+                <span className="product-current-count">{product?.prompts.length ?? 0}</span>
+                <span className="product-current-arrow">⌄</span>
+              </span>
             </button>
           </div>
           <label className="field">
@@ -1332,7 +1331,7 @@ export default function Home() {
             </div>
             <div className="product-card-grid">
               {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
-              {filteredProducts.map((item, index) => (
+              {filteredProducts.map((item) => (
                 <button
                   className={`product-card ${item.id === product?.id ? "active" : ""}`}
                   key={item.id}
@@ -1342,18 +1341,8 @@ export default function Home() {
                     closeEditor();
                   }}
                 >
-                  <span className={`product-photo tone-${(index % 6) + 1}`}>
-                    {item.name.slice(0, 2).toUpperCase()}
-                  </span>
-                  <span className="product-card-body">
-                    <strong>{item.name}</strong>
-                    <small>{item.prompts.length} prompts salvos</small>
-                    <span className="product-card-stats">
-                      <em>{productPromptCount(item, "Imagem")} img</em>
-                      <em>{productPromptCount(item, "Video")} vid</em>
-                      <em>{productPromptCount(item, "Copy")} copy</em>
-                    </span>
-                  </span>
+                  <strong>{item.name}</strong>
+                  <span>{item.prompts.length}</span>
                 </button>
               ))}
             </div>

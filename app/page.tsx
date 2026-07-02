@@ -1293,7 +1293,6 @@ export default function Home() {
               <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
                 <span>
                   <strong>{product?.name ?? "Nenhum produto"}</strong>
-                  <small>{business.products.length} produtos cadastrados</small>
                 </span>
                 <span className="product-current-arrow">v</span>
               </button>

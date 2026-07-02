@@ -857,7 +857,7 @@ input:disabled {
 .product-row,
 .tabs-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px auto;
+  grid-template-columns: minmax(280px, 560px) 250px auto;
   align-items: end;
   gap: 12px;
   padding: 12px 24px 0;
@@ -938,13 +938,13 @@ input:disabled {
 }
 
 .product-current {
-  min-height: 28px;
+  min-height: 56px;
   width: 100%;
   border: 1px solid rgba(11, 143, 131, 0.45);
   border-radius: var(--radius);
   background: var(--teal-2);
   color: var(--ink);
-  padding: 4px 8px;
+  padding: 9px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -957,12 +957,12 @@ input:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .product-current-arrow {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: #fff;
   color: #075f57;

@@ -1,24 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { videoPromptTemplate } from "@/lib/default-library";
 
 function defaultPrompt(category: string) {
   if (category === "Video") {
     return {
-      title: "Novo prompt de video",
+      title: "Video 1 - Parte 1",
       description: "Video com fala editavel.",
-      template: [
-        "Cole aqui o prompt completo de video.",
-        "",
-        "---",
-        "",
-        "SPEECH (Portuguese BR):",
-        "",
-        "\"Edite esta fala conforme o produto.\""
-      ].join("\n"),
+      template: videoPromptTemplate,
       tool: "IA de video",
       duration: "1 parte",
-      speechLines: ["Edite esta fala conforme o produto."],
+      speechLines: [
+        "Edite esta fala conforme o produto.",
+        "Troque esta linha pela segunda frase.",
+        "Troque esta linha pela terceira frase.",
+        "Finalize com uma chamada para o carrinho."
+      ],
       lineTokenPrefix: "fala_",
       lineSectionTitle: "SPEECH (Portuguese BR)",
       lineHelp: "Edite a fala para adaptar este video ao produto vendido."
@@ -64,6 +62,7 @@ export async function POST(request: Request) {
   const productId = String(body.productId ?? "");
   const businessId = String(body.businessId ?? "");
   const defaults = defaultPrompt(category);
+  const videoTitle = category === "Video" ? `${scriptGroup} - Parte ${takeOrder}` : defaults.title;
   await prisma.product.findFirstOrThrow({
     where: { id: productId, businessId, business: { userId: user.id } }
   });
@@ -73,7 +72,7 @@ export async function POST(request: Request) {
       businessId,
       productId,
       category,
-      title: defaults.title,
+      title: videoTitle,
       description: defaults.description,
       template: defaults.template,
       tool: defaults.tool,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ensureDatabaseSchema, isMissingBusinessTable } from "@/lib/db-setup";
+import { createDefaultLibrary } from "@/lib/default-library";
 import { publicUser, requireUser } from "@/lib/auth";
 
 async function getBusinesses(userId: string) {
@@ -21,7 +22,11 @@ export async function GET() {
     const { user, response } = await requireUser();
     if (response || !user) return response;
 
-    const businesses = await getBusinesses(user.id);
+    let businesses = await getBusinesses(user.id);
+    if (!businesses.length) {
+      await createDefaultLibrary(user.id);
+      businesses = await getBusinesses(user.id);
+    }
 
     return NextResponse.json({ businesses, user: publicUser(user) });
   } catch (error) {
@@ -29,7 +34,11 @@ export async function GET() {
       await ensureDatabaseSchema();
       const { user, response } = await requireUser();
       if (response || !user) return response;
-      const businesses = await getBusinesses(user.id);
+      let businesses = await getBusinesses(user.id);
+      if (!businesses.length) {
+        await createDefaultLibrary(user.id);
+        businesses = await getBusinesses(user.id);
+      }
       return NextResponse.json({ businesses, user: publicUser(user), initialized: true });
     }
 

@@ -240,6 +240,14 @@ function subscriptionInfo(user: { expiresAt: string | null; plan?: string | null
   return { label: `Ativo até ${date}`, tone: "active" };
 }
 
+function HelpDot({ text }: { text: string }) {
+  return (
+    <span className="help-dot" title={text} aria-label={text}>
+      ?
+    </span>
+  );
+}
+
 function normalizePromptForEditor(prompt: Prompt) {
   const normalizedPrompt = prompt.takeType === "varios takes" ? { ...prompt, takeType: "+de 3 takes" } : prompt;
   if (normalizedPrompt.category !== "Video" || !normalizedPrompt.lineTokenPrefix) return normalizedPrompt;
@@ -939,11 +947,12 @@ export default function Home() {
           {prompt.category === "Video" && <span className="chip strong-chip">{`${scriptGroupLabel(scriptGroupForPrompt(prompt))} - Parte ${takeOrderForPrompt(prompt)}`}</span>}
         </div>
         <div className="prompt-actions">
-          <button className="prompt-action copy" onClick={() => copyPrompt(prompt)}>
+          <button className="prompt-action copy" onClick={() => copyPrompt(prompt)} title="Copia o prompt pronto para colar na ferramenta de IA.">
             Copiar
           </button>
           <button
             className="prompt-action"
+            title="Abre o card para alterar nome, fala, ordem, tipo de video e prompt completo."
             onClick={() => {
               setPromptId(prompt.id);
               setDraft(normalizePromptForEditor({ ...structuredClone(prompt), scriptGroup: scriptGroupLabel(scriptGroupForPrompt(prompt)), takeOrder: takeOrderForPrompt(prompt) }));
@@ -952,12 +961,13 @@ export default function Home() {
           >
             Editar
           </button>
-          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)}>
+          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)} title="Cria uma copia deste card para voce adaptar uma nova variacao.">
             Duplicar
           </button>
-          <button className="prompt-action danger" onClick={() => deletePrompt(prompt)}>
+          <button className="prompt-action danger" onClick={() => deletePrompt(prompt)} title="Remove este card da biblioteca.">
             Excluir
           </button>
+          <HelpDot text={"Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nDuplicar cria uma variacao reaproveitando o prompt.\nExcluir remove o card."} />
         </div>
       </article>
     );
@@ -1352,12 +1362,18 @@ export default function Home() {
               <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
             </label>
             <div className="action-row">
-              <button className="secondary" onClick={createProduct}>
-                Criar produto
-              </button>
-              <button className="secondary" onClick={duplicateProduct} disabled={!product}>
-                Duplicar
-              </button>
+              <span className="action-help-wrap">
+                <button className="secondary" onClick={createProduct}>
+                  Criar produto
+                </button>
+                <HelpDot text={"Criar produto:\nUse quando for cadastrar um novo item da loja, como vestido, sapato, bolsa ou outro produto.\nCada produto guarda seus prompts de imagem, video e copy separados."} />
+              </span>
+              <span className="action-help-wrap">
+                <button className="secondary" onClick={duplicateProduct} disabled={!product}>
+                  Duplicar
+                </button>
+                <HelpDot text={"Duplicar produto:\nUse quando um produto novo vai reaproveitar a mesma estrutura de prompts.\nDepois de duplicar, altere nome, falas e prompts conforme o novo produto."} />
+              </span>
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
               </button>
@@ -1459,9 +1475,12 @@ export default function Home() {
                   {prompts.length} itens em {product?.name ?? "sem produto"} / {categoryTabLabel(category)}
                 </span>
               </div>
-              <button className="secondary" onClick={createPrompt} disabled={!product}>
-                Criar prompt
-              </button>
+              <span className="action-help-wrap">
+                <button className="secondary" onClick={createPrompt} disabled={!product}>
+                  Criar prompt
+                </button>
+                <HelpDot text={"Criar prompt:\nCria um novo card dentro da categoria atual.\nEm Video, ele ja abre com SPEECH para editar a fala.\nEm Imagem ou Copy, cole o prompt completo que voce usa na sua ferramenta."} />
+              </span>
             </div>
             <div className="prompt-list">
               {!product && <p className="empty-state">Crie um produto para salvar prompts.</p>}

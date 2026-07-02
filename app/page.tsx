@@ -246,6 +246,8 @@ export default function Home() {
   const [promptId, setPromptId] = useState("");
   const [draft, setDraft] = useState<Prompt | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
@@ -350,6 +352,15 @@ export default function Home() {
 
     return [...new Set([...businessVideoTypes, ...promptTypes].filter(Boolean))];
   }, [business, businessVideoTypes]);
+
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    return business?.products.filter((item) => item.name.toLowerCase().includes(query)) ?? [];
+  }, [business, productSearch]);
+
+  function productPromptCount(item: Product, promptCategory?: string) {
+    return promptCategory ? item.prompts.filter((prompt) => prompt.category === promptCategory).length : item.prompts.length;
+  }
 
   const prompts = useMemo(() => {
     return (
@@ -1280,26 +1291,18 @@ export default function Home() {
         </header>
 
         <section className="product-row">
-          <div>
-            <div className="field-label">Produtos</div>
-            <div className="product-tabs">
-              {business.products.map((item) => (
-                <button
-                  className={`product-tab ${item.id === product?.id ? "active" : ""}`}
-                  key={item.id}
-                  onClick={() => {
-                    setProductId(item.id);
-                    closeEditor();
-                  }}
-                >
-                  {item.name}
-                  <span>{item.prompts.length}</span>
-                </button>
-              ))}
-            </div>
+          <div className="product-selector">
+            <span className="field-label">Produto atual</span>
+            <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
+              <span>
+                <strong>{product?.name ?? "Nenhum produto"}</strong>
+                <small>{business.products.length} produtos cadastrados</small>
+              </span>
+              <span className="product-current-count">{product?.prompts.length ?? 0}</span>
+            </button>
           </div>
           <label className="field">
-            <span className="field-label">Produto atual</span>
+            <span className="field-label">Editar nome</span>
             <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
           </label>
           <div className="action-row">
@@ -1314,6 +1317,48 @@ export default function Home() {
             </button>
           </div>
         </section>
+
+        {productPickerOpen && (
+          <section className="product-picker">
+            <div className="product-picker-head">
+              <div>
+                <h2>Produtos</h2>
+                <span>{filteredProducts.length} encontrados em {business.name}</span>
+              </div>
+              <label className="product-picker-search">
+                Buscar produto
+                <input value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder="Nome do produto" />
+              </label>
+            </div>
+            <div className="product-card-grid">
+              {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
+              {filteredProducts.map((item, index) => (
+                <button
+                  className={`product-card ${item.id === product?.id ? "active" : ""}`}
+                  key={item.id}
+                  onClick={() => {
+                    setProductId(item.id);
+                    setProductPickerOpen(false);
+                    closeEditor();
+                  }}
+                >
+                  <span className={`product-photo tone-${(index % 6) + 1}`}>
+                    {item.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="product-card-body">
+                    <strong>{item.name}</strong>
+                    <small>{item.prompts.length} prompts salvos</small>
+                    <span className="product-card-stats">
+                      <em>{productPromptCount(item, "Imagem")} img</em>
+                      <em>{productPromptCount(item, "Video")} vid</em>
+                      <em>{productPromptCount(item, "Copy")} copy</em>
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="tabs-row">
           <div className="tabs">

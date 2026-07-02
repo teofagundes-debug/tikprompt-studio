@@ -1288,16 +1288,13 @@ export default function Home() {
 
         <section className="product-row">
           <div className="product-selector">
-            <span className="field-label">Escolha aqui o produto</span>
+            <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
             <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
               <span>
                 <strong>{product?.name ?? "Nenhum produto"}</strong>
                 <small>{business.products.length} produtos cadastrados</small>
               </span>
-              <span className="product-current-meta">
-                <span className="product-current-count">{product?.prompts.length ?? 0}</span>
-                <span className="product-current-arrow">⌄</span>
-              </span>
+              <span className="product-current-arrow">v</span>
             </button>
           </div>
           <label className="field">
@@ -1342,7 +1339,6 @@ export default function Home() {
                   }}
                 >
                   <strong>{item.name}</strong>
-                  <span>{item.prompts.length}</span>
                 </button>
               ))}
             </div>

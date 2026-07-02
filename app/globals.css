@@ -1337,6 +1337,7 @@ input:disabled {
   border-radius: var(--radius);
   padding: 8px;
   display: grid;
+  position: relative;
   align-content: start;
   align-self: start;
   gap: 7px;
@@ -1363,6 +1364,7 @@ input:disabled {
   grid-template-columns: 38px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
+  padding-right: 22px;
 }
 
 .thumb {
@@ -1417,10 +1419,16 @@ input:disabled {
 
 .prompt-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   min-width: 0;
   align-items: center;
+}
+
+.prompt-actions .help-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .prompt-action {

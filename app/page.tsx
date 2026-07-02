@@ -67,7 +67,7 @@ type AdminUser = {
 
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
-const speechHeaderPattern = /SPEECH\s*\(Portuguese BR\):/i;
+const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
 const customVideoTypesKey = "tikprompt-video-types";
 
 function sameText(left: string, right: string) {
@@ -149,13 +149,34 @@ function extractSpeechLines(template: string) {
 
   const sectionStart = match.index + match[0].length;
   const rest = template.slice(sectionStart);
-  const sectionEnd = rest.search(/\n---/);
-  const body = (sectionEnd >= 0 ? rest.slice(0, sectionEnd) : rest).trim().replace(/^"+|"+$/g, "");
+  const sectionEnd = rest.search(/^\s*---\s*$/m);
+  const rawBody = (sectionEnd >= 0 ? rest.slice(0, sectionEnd) : rest).trim();
+  const body = rawBody
+    .replace(/^["'“”]+/, "")
+    .replace(/["'“”]+$/, "")
+    .trim();
 
   return body
     .split(/\n+/)
-    .map((line) => line.trim().replace(/^"+|"+$/g, ""))
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^[-*]\s*/, "")
+        .replace(/^["'“”]+/, "")
+        .replace(/["'“”]+$/, "")
+        .trim()
+    )
     .filter((line) => line && line !== "---");
+}
+
+function hasOnlySpeechTokens(lines: string[]) {
+  return lines.length > 0 && lines.every((line) => /^\{[^}]+\}$/.test(line));
+}
+
+function resolveSpeechLinesFromTemplate(template: string, fallback: string[]) {
+  if (!speechHeaderPattern.test(template)) return [];
+  const speechLines = extractSpeechLines(template);
+  return hasOnlySpeechTokens(speechLines) ? fallback : speechLines;
 }
 
 function formatSpeechSection(speechLines: string[]) {
@@ -185,8 +206,7 @@ function normalizePromptForEditor(prompt: Prompt) {
   if (normalizedPrompt.category !== "Video" || !normalizedPrompt.lineTokenPrefix) return normalizedPrompt;
 
   const speechLines = extractSpeechLines(normalizedPrompt.template);
-  const onlyTokens = speechLines.length > 0 && speechLines.every((line) => /^\{[^}]+\}$/.test(line));
-  if (!speechLines.length || onlyTokens) return normalizedPrompt;
+  if (!speechLines.length || hasOnlySpeechTokens(speechLines)) return normalizedPrompt;
 
   return { ...normalizedPrompt, speechLines };
 }
@@ -618,8 +638,12 @@ export default function Home() {
 
   async function savePrompt() {
     if (!draft) return;
+    const templateSpeechLines = draft.category === "Video" ? resolveSpeechLinesFromTemplate(draft.template, draft.speechLines) : draft.speechLines;
+    const draftWithSyncedSpeech = draft.category === "Video" ? { ...draft, speechLines: templateSpeechLines } : draft;
     const parsedGroup = draft.category === "Video" ? parseScriptGroupInput(draft.scriptGroup ?? "", draft.takeOrder) : null;
-    const payload = parsedGroup ? { ...draft, scriptGroup: parsedGroup.scriptGroup, takeOrder: parsedGroup.takeOrder } : draft;
+    const payload = parsedGroup
+      ? { ...draftWithSyncedSpeech, scriptGroup: parsedGroup.scriptGroup, takeOrder: parsedGroup.takeOrder }
+      : draftWithSyncedSpeech;
     const response = await fetch(`/api/prompts/${draft.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -1476,8 +1500,8 @@ export default function Home() {
                       value={draft.template}
                       onChange={(event) => {
                         const template = event.target.value;
-                        const speechLines = draft.category === "Video" ? extractSpeechLines(template) : [];
-                        setDraft({ ...draft, template, speechLines: speechLines.length ? speechLines : draft.speechLines });
+                        const speechLines = draft.category === "Video" ? resolveSpeechLinesFromTemplate(template, draft.speechLines) : [];
+                        setDraft({ ...draft, template, speechLines });
                       }}
                     />
                   </label>

@@ -1575,7 +1575,448 @@ textarea {
   transform: translateY(0);
 }
 
+.landing-page {
+  min-height: 100vh;
+  background: #f6faf8;
+  color: #101312;
+}
+
+.landing-hero {
+  position: relative;
+  min-height: 92vh;
+  overflow: hidden;
+  padding: 24px clamp(18px, 5vw, 72px) 70px;
+  display: grid;
+  align-content: space-between;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 84% 18%, rgba(245, 200, 76, 0.38), transparent 28%),
+    radial-gradient(circle at 20% 78%, rgba(11, 143, 131, 0.22), transparent 30%),
+    linear-gradient(135deg, #f9fffc, #eaf6f2 54%, #fff5df);
+}
+
+.landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: 94px clamp(18px, 6vw, 90px) 34px;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(17, 20, 19, 0.86), rgba(17, 20, 19, 0.58)),
+    linear-gradient(135deg, rgba(240, 100, 73, 0.85), rgba(11, 143, 131, 0.74));
+  box-shadow: 0 34px 90px rgba(15, 21, 18, 0.18);
+  z-index: -2;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  position: relative;
+  z-index: 3;
+}
+
+.landing-brand,
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-brand,
+.landing-nav-actions a,
+.landing-cta-row a,
+.plans-grid a,
+.landing-final a {
+  text-decoration: none;
+}
+
+.landing-brand {
+  color: #101312;
+  font-weight: 950;
+}
+
+.landing-brand .mark {
+  width: 34px;
+  height: 34px;
+}
+
+.landing-nav-actions a {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: #101312;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 19, 18, 0.1);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.hero-scene {
+  position: absolute;
+  inset: 132px clamp(16px, 6vw, 92px) 42px;
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  padding: 24px;
+  opacity: 0.74;
+  z-index: -1;
+}
+
+.scene-sidebar,
+.scene-board,
+.scene-column,
+.scene-prompt,
+.benefit-card,
+.plans-grid article,
+.workflow-grid article {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+}
+
+.scene-sidebar {
+  border-radius: 12px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.scene-sidebar span,
+.scene-card span {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #f06449, #f5c84c 48%, #0b8f83);
+}
+
+.scene-sidebar strong,
+.scene-sidebar small {
+  display: block;
+}
+
+.scene-board {
+  border-radius: 12px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.scene-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scene-tabs span,
+.scene-tabs strong {
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: #f3f8f6;
+  font-size: 12px;
+}
+
+.scene-tabs strong {
+  background: #dff5f1;
+  color: #075f57;
+}
+
+.scene-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr minmax(220px, 0.9fr);
+  gap: 12px;
+}
+
+.scene-column,
+.scene-prompt {
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.scene-column.warm {
+  background: rgba(255, 248, 232, 0.9);
+}
+
+.scene-card {
+  border: 1px solid #dbe3df;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+  display: grid;
+  gap: 4px;
+}
+
+.scene-card.compact {
+  opacity: 0.75;
+}
+
+.scene-prompt {
+  background: #101312;
+  color: #fff;
+}
+
+.scene-prompt small {
+  color: #f5c84c;
+  font-weight: 900;
+}
+
+.scene-prompt p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.landing-hero-copy {
+  max-width: 760px;
+  padding-top: 24vh;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
+  position: relative;
+  z-index: 2;
+}
+
+.landing-kicker,
+.section-heading span {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(245, 200, 76, 0.2);
+  color: #ffe29a;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.landing-hero-copy h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(44px, 8vw, 96px);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.landing-hero-copy p {
+  max-width: 660px;
+  margin: 0;
+  font-size: clamp(17px, 2.2vw, 23px);
+  line-height: 1.45;
+}
+
+.landing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.landing-primary,
+.landing-secondary {
+  min-height: 48px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 18px;
+  font-weight: 950;
+}
+
+.landing-primary {
+  background: #f5c84c;
+  color: #101312;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+}
+
+.landing-secondary {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-section {
+  padding: 74px clamp(18px, 5vw, 72px);
+}
+
+.section-heading {
+  max-width: 760px;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.section-heading span {
+  background: #dff5f1;
+  color: #075f57;
+}
+
+.section-heading h2,
+.landing-final h2 {
+  margin: 0;
+  font-size: clamp(30px, 4.3vw, 58px);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.section-heading p,
+.landing-final p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.benefit-grid,
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.benefit-card,
+.plans-grid article {
+  border-color: var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  min-height: 190px;
+}
+
+.benefit-card h3,
+.plans-grid h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.benefit-card p,
+.plans-grid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.workflow-band {
+  background: #101312;
+  color: #fff;
+}
+
+.workflow-band .section-heading p,
+.workflow-band .section-heading h2 {
+  color: #fff;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workflow-grid article {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  min-height: 150px;
+  padding: 18px;
+  display: grid;
+  align-content: space-between;
+}
+
+.workflow-grid span {
+  color: #f5c84c;
+  font-weight: 950;
+}
+
+.workflow-grid strong {
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.plans-section {
+  background: #fff;
+}
+
+.plans-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plans-grid article {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.plans-grid a {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #101312;
+  color: #fff;
+  font-weight: 900;
+}
+
+.plans-grid .featured-plan {
+  border-color: rgba(11, 143, 131, 0.42);
+  background: #f1fbf8;
+}
+
+.landing-final {
+  margin: 0 clamp(18px, 5vw, 72px) 42px;
+  border-radius: 16px;
+  padding: clamp(28px, 5vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #101312;
+  color: #fff;
+}
+
+.landing-final p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 @media (max-width: 940px) {
+  .landing-nav,
+  .landing-final {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .landing-hero {
+    min-height: auto;
+    padding-bottom: 34px;
+  }
+
+  .landing-hero::before {
+    inset: 86px 12px 20px;
+  }
+
+  .hero-scene {
+    position: relative;
+    inset: auto;
+    grid-template-columns: 1fr;
+    padding: 14px;
+    margin-top: 28px;
+    order: 3;
+  }
+
+  .scene-columns,
+  .benefit-grid,
+  .workflow-grid,
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-copy {
+    padding-top: 70px;
+  }
+
+  .landing-section {
+    padding: 46px 16px;
+  }
+
   .app,
   .workspace,
   .product-row,

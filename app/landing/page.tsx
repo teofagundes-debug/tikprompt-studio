@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { accessPackages } from "@/lib/packages";
 
 const benefits = [
   {
@@ -26,28 +27,6 @@ const steps = [
   "Copie, cole na IA e produza em escala"
 ];
 
-const plans = [
-  {
-    name: "Mensal",
-    price: "R$ 49,90",
-    description: "Ideal para testar a ferramenta e organizar os primeiros produtos.",
-    link: "https://woovi.com/pay/0d1e6219-4a16-481d-9c38-be93023563f6"
-  },
-  {
-    name: "Trimestral",
-    price: "R$ 119,70",
-    description: "Boa opção para quem já produz conteúdo toda semana e quer estabilidade.",
-    link: "https://woovi.com/pay/9894ce36-8adb-46e5-8e0d-abd235c70ad6",
-    featured: true
-  },
-  {
-    name: "Semestral",
-    price: "R$ 179,40",
-    description: "Para operações que trabalham com muitos produtos e precisam de rotina.",
-    link: "https://woovi.com/pay/3e772076-9bfb-47b5-ab54-04b00ffa42cf"
-  }
-];
-
 export default function LandingPage() {
   return (
     <main className="landing-page">
@@ -59,7 +38,7 @@ export default function LandingPage() {
           </Link>
           <div className="landing-nav-actions">
             <Link href="/">Entrar</Link>
-            <a href="#planos">Ver planos</a>
+            <a href="#pacotes">Ver pacotes</a>
           </div>
         </div>
 
@@ -111,7 +90,7 @@ export default function LandingPage() {
             Organize prompts de imagem, roteiros de vídeo e copies por negócio e produto para produzir conteúdo de vendas com mais velocidade no TikTok, Instagram, Facebook e e-commerce.
           </p>
           <div className="landing-cta-row">
-            <a className="landing-primary" href="#planos">Quero organizar meus prompts</a>
+            <a className="landing-primary" href="#pacotes">Quero organizar meus prompts</a>
             <Link className="landing-secondary" href="/">Já tenho acesso</Link>
           </div>
         </div>
@@ -148,20 +127,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="landing-section plans-section" id="planos">
+      <section className="landing-section plans-section" id="pacotes">
         <div className="section-heading">
-          <span>Planos</span>
+          <span>Pacotes</span>
           <h2>Comece simples e escale quando sua operação crescer</h2>
-          <p>Use mensal, trimestral ou semestral conforme sua estratégia comercial. O acesso é liberado automaticamente após o pagamento confirmado.</p>
+          <p>Contrate pacotes de acesso de 1 mês, 3 meses ou 6 meses. O acesso é liberado automaticamente após o pagamento confirmado.</p>
         </div>
         <div className="plans-grid">
-          {plans.map((plan) => (
+          {accessPackages.map((plan) => (
             <article className={plan.featured ? "featured-plan" : ""} key={plan.name}>
-              <h3>{plan.name}</h3>
+              <h3>{plan.landingName}</h3>
               <strong className="plan-price">{plan.price}</strong>
               <p>{plan.description}</p>
               <a href={plan.link} target="_blank" rel="noreferrer">
-                Assinar agora
+                Contratar pacote
               </a>
             </article>
           ))}
@@ -174,7 +153,7 @@ export default function LandingPage() {
           <h2>Transforme seus prompts em um sistema de trabalho.</h2>
           <p>Menos procura, menos retrabalho e mais velocidade para criar conteúdo de produto.</p>
         </div>
-        <a className="landing-primary" href="#planos">Escolher um plano</a>
+        <a className="landing-primary" href="#pacotes">Escolher um pacote</a>
       </section>
 
       <footer className="landing-footer">

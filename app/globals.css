@@ -156,12 +156,13 @@ input:disabled {
 
 .user-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   margin-top: 6px;
 }
 
-.user-actions button {
+.user-actions button,
+.user-action-link {
   min-height: 30px;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -169,6 +170,10 @@ input:disabled {
   color: #fff;
   font-size: 11px;
   font-weight: 850;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .help-dot {
@@ -376,6 +381,25 @@ input:disabled {
 .admin-create {
   display: grid;
   gap: 12px;
+}
+
+.auth-link-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.auth-link-row a {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  background: #fbfcfc;
+  text-decoration: none;
+  font-weight: 850;
 }
 
 .auth-actions {
@@ -2014,6 +2038,116 @@ textarea {
   text-decoration: none;
 }
 
+.renew-page {
+  min-height: 100vh;
+  padding: clamp(18px, 4vw, 48px);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(245, 200, 76, 0.28), transparent 28%),
+    radial-gradient(circle at 86% 82%, rgba(11, 143, 131, 0.22), transparent 30%),
+    #f6faf8;
+}
+
+.renew-card {
+  width: min(100%, 1040px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+  padding: clamp(18px, 4vw, 38px);
+  display: grid;
+  gap: 28px;
+}
+
+.renew-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.renew-head > a:last-child {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  padding: 10px 14px;
+  text-decoration: none;
+  font-weight: 850;
+}
+
+.renew-title {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.renew-title .landing-kicker {
+  background: #dff5f1;
+  color: #075f57;
+}
+
+.renew-title h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 58px);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.renew-title p,
+.renew-support {
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.renew-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.renew-grid article {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 22px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.renew-grid .featured-plan {
+  border-color: rgba(11, 143, 131, 0.42);
+  background: #f1fbf8;
+}
+
+.renew-grid h2,
+.renew-grid p {
+  margin: 0;
+}
+
+.renew-grid p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.renew-grid a {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 11px 15px;
+  background: #101312;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.renew-support a {
+  color: #075f57;
+  font-weight: 850;
+}
+
 @media (max-width: 940px) {
   .landing-nav,
   .landing-final,
@@ -2043,8 +2177,14 @@ textarea {
   .scene-columns,
   .benefit-grid,
   .workflow-grid,
-  .plans-grid {
+  .plans-grid,
+  .renew-grid {
     grid-template-columns: 1fr;
+  }
+
+  .renew-head {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .landing-hero-copy {

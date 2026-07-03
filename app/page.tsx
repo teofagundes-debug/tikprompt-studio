@@ -1014,6 +1014,12 @@ export default function Home() {
             <button className="primary" type="submit">
               {needsSetup ? "Criar admin e entrar" : "Entrar"}
             </button>
+            {!needsSetup && (
+              <div className="auth-link-row">
+                <a href="/renovar">Renove aqui</a>
+                <a href="/landing#pacotes">Contrate um pacote</a>
+              </div>
+            )}
           </form>
         </section>
       </main>
@@ -1111,6 +1117,7 @@ export default function Home() {
                 Admin
               </button>
             )}
+            <a className="user-action-link" href="/renovar">Renove aqui</a>
             <button onClick={() => setView("password")}>Senha</button>
             <button onClick={logout}>Sair</button>
           </div>

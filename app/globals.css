@@ -1914,13 +1914,33 @@ textarea {
   font-size: 20px;
 }
 
+.plan-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
 .plan-price {
   display: block;
-  margin: 0 0 8px;
+  margin: 0;
   color: #101312;
   font-size: 32px;
   line-height: 1;
   font-weight: 950;
+}
+
+.plan-savings {
+  border: 1px solid rgba(11, 143, 131, 0.28);
+  border-radius: 999px;
+  background: #dff5f1;
+  color: #075f57;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .benefit-card p,

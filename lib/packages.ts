@@ -10,6 +10,7 @@ export const accessPackages = [
     name: "3 meses",
     landingName: "Pacote 3 meses",
     price: "R$ 119,70",
+    savings: "economia de 20%",
     description: "Boa opção para quem já produz conteúdo toda semana e quer estabilidade.",
     link: "https://woovi.com/pay/9894ce36-8adb-46e5-8e0d-abd235c70ad6",
     featured: true
@@ -18,6 +19,7 @@ export const accessPackages = [
     name: "6 meses",
     landingName: "Pacote 6 meses",
     price: "R$ 179,40",
+    savings: "economia de 40%",
     description: "Para operações que trabalham com muitos produtos e precisam de rotina.",
     link: "https://woovi.com/pay/3e772076-9bfb-47b5-ab54-04b00ffa42cf"
   }

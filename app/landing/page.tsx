@@ -137,7 +137,10 @@ export default function LandingPage() {
           {accessPackages.map((plan) => (
             <article className={plan.featured ? "featured-plan" : ""} key={plan.name}>
               <h3>{plan.landingName}</h3>
-              <strong className="plan-price">{plan.price}</strong>
+              <div className="plan-price-row">
+                <strong className="plan-price">{plan.price}</strong>
+                {plan.savings && <span className="plan-savings">{plan.savings}</span>}
+              </div>
               <p>{plan.description}</p>
               <a href={plan.link} target="_blank" rel="noreferrer">
                 Contratar pacote

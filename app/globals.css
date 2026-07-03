@@ -1890,6 +1890,15 @@ textarea {
   font-size: 20px;
 }
 
+.plan-price {
+  display: block;
+  margin: 0 0 8px;
+  color: #101312;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 950;
+}
+
 .benefit-card p,
 .plans-grid p {
   margin: 0;

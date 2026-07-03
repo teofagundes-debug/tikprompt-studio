@@ -26,6 +26,28 @@ const steps = [
   "Copie, cole na IA e produza em escala"
 ];
 
+const plans = [
+  {
+    name: "Mensal",
+    price: "R$ 49,90",
+    description: "Ideal para testar a ferramenta e organizar os primeiros produtos.",
+    link: "https://woovi.com/pay/0d1e6219-4a16-481d-9c38-be93023563f6"
+  },
+  {
+    name: "Trimestral",
+    price: "R$ 119,70",
+    description: "Boa opção para quem já produz conteúdo toda semana e quer estabilidade.",
+    link: "https://woovi.com/pay/9894ce36-8adb-46e5-8e0d-abd235c70ad6",
+    featured: true
+  },
+  {
+    name: "Semestral",
+    price: "R$ 179,40",
+    description: "Para operações que trabalham com muitos produtos e precisam de rotina.",
+    link: "https://woovi.com/pay/3e772076-9bfb-47b5-ab54-04b00ffa42cf"
+  }
+];
+
 export default function LandingPage() {
   return (
     <main className="landing-page">
@@ -133,21 +155,16 @@ export default function LandingPage() {
           <p>Use mensal, trimestral ou semestral conforme sua estratégia comercial. O acesso é liberado automaticamente após o pagamento confirmado.</p>
         </div>
         <div className="plans-grid">
-          <article>
-            <h3>Mensal</h3>
-            <p>Ideal para testar a ferramenta e organizar os primeiros produtos.</p>
-            <a href="#contato">Solicitar acesso</a>
-          </article>
-          <article className="featured-plan">
-            <h3>Trimestral</h3>
-            <p>Boa opção para quem já produz conteúdo toda semana e quer estabilidade.</p>
-            <a href="#contato">Solicitar acesso</a>
-          </article>
-          <article>
-            <h3>Semestral</h3>
-            <p>Para operações que trabalham com muitos produtos e precisam de rotina.</p>
-            <a href="#contato">Solicitar acesso</a>
-          </article>
+          {plans.map((plan) => (
+            <article className={plan.featured ? "featured-plan" : ""} key={plan.name}>
+              <h3>{plan.name}</h3>
+              <strong className="plan-price">{plan.price}</strong>
+              <p>{plan.description}</p>
+              <a href={plan.link} target="_blank" rel="noreferrer">
+                Assinar agora
+              </a>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -157,7 +174,7 @@ export default function LandingPage() {
           <h2>Transforme seus prompts em um sistema de trabalho.</h2>
           <p>Menos procura, menos retrabalho e mais velocidade para criar conteúdo de produto.</p>
         </div>
-        <Link className="landing-primary" href="/">Entrar no TikPrompt Studio</Link>
+        <a className="landing-primary" href="#planos">Escolher um plano</a>
       </section>
 
       <footer className="landing-footer">

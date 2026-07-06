@@ -1585,9 +1585,9 @@ export default function Home() {
                         onChange={(event) =>
                           {
                             const speechLines = event.target.value
+                              .replace(/\r/g, "")
                               .split(/\n+/)
-                              .map((line) => line.trim())
-                              .filter(Boolean);
+                              .filter((line) => line.trim().length > 0);
                             setDraft({
                               ...draft,
                               speechLines,

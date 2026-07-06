@@ -1355,6 +1355,11 @@ input:disabled {
   align-items: start;
 }
 
+.script-group.drop-ready {
+  outline: 2px dashed rgba(11, 143, 131, 0.28);
+  outline-offset: 2px;
+}
+
 .prompt-card {
   border: 1px solid var(--line);
   background: #fff;
@@ -1365,6 +1370,19 @@ input:disabled {
   align-content: start;
   align-self: start;
   gap: 7px;
+}
+
+.prompt-card[draggable="true"] {
+  cursor: grab;
+}
+
+.prompt-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.prompt-card.dragging {
+  opacity: 0.48;
+  transform: scale(0.985);
 }
 
 .prompt-card.active {

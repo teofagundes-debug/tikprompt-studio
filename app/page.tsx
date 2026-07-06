@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from "react";
 import { buildPromptOutput, getPromptChips } from "@/lib/prompt";
 
 type Prompt = {
@@ -296,6 +296,7 @@ export default function Home() {
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState("");
+  const [draggedPromptId, setDraggedPromptId] = useState("");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
@@ -711,6 +712,53 @@ export default function Home() {
     showToast("Edição salva");
   }
 
+  async function moveVideoPrompt(promptToMoveId: string, targetGroup: string, targetPromptId?: string) {
+    if (!promptToMoveId || promptToMoveId === targetPromptId) return;
+
+    const movingPrompt = prompts.find((prompt) => prompt.id === promptToMoveId);
+    if (!movingPrompt || movingPrompt.category !== "Video") return;
+
+    const sourceGroup = scriptGroupLabel(scriptGroupForPrompt(movingPrompt));
+    const destinationGroup = scriptGroupLabel(targetGroup);
+    const sourceItems = prompts.filter((prompt) => scriptGroupLabel(scriptGroupForPrompt(prompt)) === sourceGroup && prompt.id !== promptToMoveId);
+    const destinationItems =
+      sourceGroup === destinationGroup
+        ? sourceItems
+        : prompts.filter((prompt) => scriptGroupLabel(scriptGroupForPrompt(prompt)) === destinationGroup);
+    const targetIndex = targetPromptId ? destinationItems.findIndex((prompt) => prompt.id === targetPromptId) : destinationItems.length;
+    const insertIndex = targetIndex >= 0 ? targetIndex : destinationItems.length;
+    const reorderedDestination = [...destinationItems.slice(0, insertIndex), movingPrompt, ...destinationItems.slice(insertIndex)];
+    const updates: Array<Promise<Response>> = [];
+
+    const queueUpdate = (prompt: Prompt, scriptGroup: string, takeOrder: number) => {
+      const currentGroup = scriptGroupLabel(scriptGroupForPrompt(prompt));
+      const currentOrder = takeOrderForPrompt(prompt);
+      if (currentGroup === scriptGroup && currentOrder === takeOrder) return;
+
+      updates.push(
+        fetch(`/api/prompts/${prompt.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...prompt, scriptGroup, takeOrder })
+        })
+      );
+    };
+
+    if (sourceGroup !== destinationGroup) {
+      sourceItems.forEach((prompt, index) => queueUpdate(prompt, sourceGroup, index + 1));
+    }
+
+    reorderedDestination.forEach((prompt, index) => queueUpdate(prompt, destinationGroup, index + 1));
+
+    if (!updates.length) return;
+
+    await Promise.all(updates);
+    setDraggedPromptId("");
+    if (draft?.id === promptToMoveId) closeEditor();
+    await loadData();
+    showToast("Ordem atualizada");
+  }
+
   async function duplicatePrompt(prompt: Prompt) {
     const response = await fetch(`/api/prompts/${prompt.id}/duplicate`, { method: "POST" });
     const data = await readJson(response);
@@ -928,9 +976,34 @@ export default function Home() {
     await loadAdminUsers();
   }
 
-  function renderPromptCard(prompt: Prompt) {
+  function renderPromptCard(prompt: Prompt, targetGroup?: string) {
+    const isVideoCard = prompt.category === "Video" && Boolean(targetGroup);
+    const handleDragOver = (event: DragEvent<HTMLElement>) => {
+      if (!isVideoCard || !draggedPromptId) return;
+      event.preventDefault();
+    };
+    const handleDrop = async (event: DragEvent<HTMLElement>) => {
+      if (!isVideoCard || !draggedPromptId || !targetGroup) return;
+      event.preventDefault();
+      event.stopPropagation();
+      await moveVideoPrompt(draggedPromptId, targetGroup, prompt.id);
+    };
+
     return (
-      <article className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""}`} key={prompt.id}>
+      <article
+        className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""} ${prompt.id === draggedPromptId ? "dragging" : ""}`}
+        draggable={isVideoCard}
+        key={prompt.id}
+        onDragEnd={() => setDraggedPromptId("")}
+        onDragOver={handleDragOver}
+        onDragStart={(event) => {
+          if (!isVideoCard) return;
+          setDraggedPromptId(prompt.id);
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", prompt.id);
+        }}
+        onDrop={handleDrop}
+      >
         <div className="prompt-top">
           <span className="thumb" style={{ background: prompt.thumb ?? undefined }} />
           <span>
@@ -1495,7 +1568,19 @@ export default function Home() {
               {category !== "Video" && prompts.map((prompt) => renderPromptCard(prompt))}
               {category === "Video" &&
                 promptGroups.map((group) => (
-                  <section className="script-group" key={group.scriptGroup}>
+                  <section
+                    className={`script-group ${draggedPromptId ? "drop-ready" : ""}`}
+                    key={group.scriptGroup}
+                    onDragOver={(event) => {
+                      if (!draggedPromptId) return;
+                      event.preventDefault();
+                    }}
+                    onDrop={async (event) => {
+                      if (!draggedPromptId) return;
+                      event.preventDefault();
+                      await moveVideoPrompt(draggedPromptId, group.scriptGroup);
+                    }}
+                  >
                     <div className="script-group-head">
                       <div>
                         <h3>{scriptGroupLabel(group.scriptGroup)}</h3>
@@ -1505,7 +1590,7 @@ export default function Home() {
                         Duplicar video
                       </button>
                     </div>
-                    <div className="script-group-grid">{group.prompts.map((prompt) => renderPromptCard(prompt))}</div>
+                    <div className="script-group-grid">{group.prompts.map((prompt) => renderPromptCard(prompt, group.scriptGroup))}</div>
                   </section>
                 ))}
             </div>

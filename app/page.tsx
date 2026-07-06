@@ -1034,13 +1034,13 @@ export default function Home() {
           >
             Editar
           </button>
-          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)} title="Cria uma copia deste card para voce adaptar uma nova variacao.">
+          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)} title="Cria uma copia deste card para voce adaptar uma nova variacao. Depois, arraste o card para a posicao desejada.">
             Duplicar
           </button>
           <button className="prompt-action danger" onClick={() => deletePrompt(prompt)} title="Remove este card da biblioteca.">
             Excluir
           </button>
-          <HelpDot text={"Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nDuplicar cria uma variacao reaproveitando o prompt.\nExcluir remove o card."} />
+          <HelpDot text={"Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nDuplicar cria uma variacao reaproveitando o prompt.\nEm videos, arraste o card para mudar de video ou alterar a ordem das partes.\nExcluir remove o card."} />
         </div>
       </article>
     );
@@ -1542,7 +1542,7 @@ export default function Home() {
                 Excluir
               </button>
             </div>
-            <span className="subtabs-note">Crie, edite e separe suas versões de vídeos do mesmo produto.</span>
+            <span className="subtabs-note">Crie ou duplique cards e depois arraste para organizar por vídeo e ordem das partes.</span>
           </section>
         )}
 
@@ -1559,7 +1559,7 @@ export default function Home() {
                 <button className="secondary" onClick={createPrompt} disabled={!product}>
                   Criar prompt
                 </button>
-                <HelpDot text={"Criar prompt:\nCria um novo card dentro da categoria atual.\nEm Video, ele ja abre com SPEECH para editar a fala.\nEm Imagem ou Copy, cole o prompt completo que voce usa na sua ferramenta."} />
+                <HelpDot text={"Criar prompt:\nCria um novo card dentro da categoria atual.\nEm Video, ele ja abre com SPEECH para editar a fala.\nDepois de criar ou duplicar um video, arraste o card para a posicao desejada.\nEm Imagem ou Copy, cole o prompt completo que voce usa na sua ferramenta."} />
               </span>
             </div>
             <div className="prompt-list">

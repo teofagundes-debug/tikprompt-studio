@@ -76,6 +76,7 @@ type AdminUser = {
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
+const speechDividerPattern = /^\s*-{3,}\s*$/m;
 const customVideoTypesKey = "tikprompt-video-types";
 
 function sameText(left: string, right: string) {
@@ -157,7 +158,7 @@ function extractSpeechLines(template: string) {
 
   const sectionStart = match.index + match[0].length;
   const rest = template.slice(sectionStart);
-  const sectionEnd = rest.search(/^\s*---\s*$/m);
+  const sectionEnd = rest.search(speechDividerPattern);
   const rawBody = (sectionEnd >= 0 ? rest.slice(0, sectionEnd) : rest).trim();
   const body = rawBody
     .replace(/^["'“”]+/, "")
@@ -174,7 +175,7 @@ function extractSpeechLines(template: string) {
         .replace(/["'“”]+$/, "")
         .trim()
     )
-    .filter((line) => line && line !== "---");
+    .filter((line) => line && !/^-{3,}$/.test(line));
 }
 
 function hasOnlySpeechTokens(lines: string[]) {
@@ -203,7 +204,7 @@ function syncSpeechSection(template: string, speechLines: string[]) {
   const sectionStart = match.index;
   const afterHeader = match.index + match[0].length;
   const rest = template.slice(afterHeader);
-  const nextDivider = rest.search(/\n---/);
+  const nextDivider = rest.search(/\n\s*-{3,}\s*(?=\n|$)/);
   const sectionEnd = nextDivider >= 0 ? afterHeader + nextDivider : template.length;
 
   return `${template.slice(0, sectionStart)}${speechSection}${template.slice(sectionEnd)}`;

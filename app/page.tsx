@@ -992,7 +992,7 @@ export default function Home() {
 
     return (
       <article
-        className={`prompt-card ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""} ${prompt.id === draggedPromptId ? "dragging" : ""}`}
+        className={`prompt-card ${isVideoCard ? "video-card" : ""} ${prompt.id === promptId ? "active" : ""} ${prompt.id === copiedPromptId ? "copied" : ""} ${prompt.id === draggedPromptId ? "dragging" : ""}`}
         draggable={isVideoCard}
         key={prompt.id}
         onDragEnd={() => setDraggedPromptId("")}
@@ -1009,16 +1009,17 @@ export default function Home() {
           <span className="thumb" style={{ background: prompt.thumb ?? undefined }} />
           <span>
             <h3>{prompt.title}</h3>
-            <p>{prompt.description}</p>
+            {!isVideoCard && <p>{prompt.description}</p>}
           </span>
         </div>
         <div className="chips">
-          {getPromptChips(prompt).map((chip) => (
-            <span className="chip" key={chip}>
-              {chip}
-            </span>
-          ))}
-          {prompt.category === "Video" && <span className="chip strong-chip">{`${scriptGroupLabel(scriptGroupForPrompt(prompt))} - Parte ${takeOrderForPrompt(prompt)}`}</span>}
+          {!isVideoCard &&
+            getPromptChips(prompt).map((chip) => (
+              <span className="chip" key={chip}>
+                {chip}
+              </span>
+            ))}
+          {isVideoCard && <span className="chip strong-chip">{`${scriptGroupLabel(scriptGroupForPrompt(prompt))} - Parte ${takeOrderForPrompt(prompt)}`}</span>}
         </div>
         <div className="prompt-actions">
           <button className="prompt-action copy" onClick={() => copyPrompt(prompt)} title="Copia o prompt pronto para colar na ferramenta de IA.">

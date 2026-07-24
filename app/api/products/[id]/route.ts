@@ -13,7 +13,10 @@ export async function PATCH(request: Request, { params }: Params) {
   await prisma.product.findFirstOrThrow({ where: { id, business: { userId: user.id } } });
   const product = await prisma.product.update({
     where: { id },
-    data: { name: body.name }
+    data: {
+      ...(body.name !== undefined ? { name: String(body.name) } : {}),
+      ...(body.imageUrl !== undefined ? { imageUrl: String(body.imageUrl || "") || null } : {})
+    }
   });
 
   return NextResponse.json({ product });

@@ -1036,6 +1036,17 @@ input:disabled {
   text-align: left;
 }
 
+.product-thumb,
+.product-card-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border: 1px solid rgba(11, 143, 131, 0.2);
+  background: #fff;
+}
+
 .product-current strong {
   display: block;
   overflow: hidden;
@@ -1120,6 +1131,7 @@ input:disabled {
   padding: 7px 9px;
   display: flex;
   align-items: center;
+  gap: 8px;
   text-align: left;
 }
 
@@ -1164,6 +1176,16 @@ input:disabled {
   overflow-wrap: anywhere;
   font-size: 12px;
   line-height: 1.2;
+}
+
+.product-photo-button {
+  min-height: 38px;
+  cursor: pointer;
+}
+
+.product-photo-button.disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
 }
 
 .product-card.active {

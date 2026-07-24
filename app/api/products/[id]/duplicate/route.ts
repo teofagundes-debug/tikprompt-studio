@@ -17,6 +17,7 @@ export async function POST(_request: Request, { params }: Params) {
   const copy = await prisma.product.create({
     data: {
       name: `${product.name} - copia`,
+      imageUrl: product.imageUrl,
       businessId: product.businessId,
       prompts: {
         create: product.prompts.map((prompt) => ({

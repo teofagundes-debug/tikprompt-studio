@@ -46,6 +46,7 @@ export async function ensureDatabaseSchema() {
     CREATE TABLE IF NOT EXISTS "Product" (
       "id" TEXT NOT NULL,
       "name" TEXT NOT NULL,
+      "imageUrl" TEXT,
       "businessId" TEXT NOT NULL,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -82,6 +83,7 @@ export async function ensureDatabaseSchema() {
   `);
 
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Product_businessId_idx" ON "Product"("businessId");`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_businessId_idx" ON "Prompt"("businessId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_productId_idx" ON "Prompt"("productId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_category_idx" ON "Prompt"("category");`);

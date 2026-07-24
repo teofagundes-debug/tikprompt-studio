@@ -29,6 +29,7 @@ type Prompt = {
 type Product = {
   id: string;
   name: string;
+  imageUrl: string | null;
   prompts: Prompt[];
 };
 
@@ -76,7 +77,7 @@ type AdminUser = {
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
-const speechDividerPattern = /^\s*-{3,}\s*$/m;
+const speechDividerPattern = /^\s*[-=]{3,}\s*$/m;
 const customVideoTypesKey = "tikprompt-video-types";
 
 function sameText(left: string, right: string) {
@@ -175,7 +176,7 @@ function extractSpeechLines(template: string) {
         .replace(/["'“”]+$/, "")
         .trim()
     )
-    .filter((line) => line && !/^-{3,}$/.test(line));
+    .filter((line) => line && !/^[-=]{3,}$/.test(line));
 }
 
 function hasOnlySpeechTokens(lines: string[]) {
@@ -204,7 +205,7 @@ function syncSpeechSection(template: string, speechLines: string[]) {
   const sectionStart = match.index;
   const afterHeader = match.index + match[0].length;
   const rest = template.slice(afterHeader);
-  const nextDivider = rest.search(/\n\s*-{3,}\s*(?=\n|$)/);
+  const nextDivider = rest.search(/\n\s*[-=]{3,}\s*(?=\n|$)/);
   const sectionEnd = nextDivider >= 0 ? afterHeader + nextDivider : template.length;
 
   return `${template.slice(0, sectionStart)}${speechSection}${template.slice(sectionEnd)}`;
@@ -268,6 +269,34 @@ async function readJson(response: Response) {
   } catch {
     return { error: text.slice(0, 220) };
   }
+}
+
+function resizeProductImage(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Nao foi possivel ler a imagem."));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("Nao foi possivel carregar a imagem."));
+      image.onload = () => {
+        const maxSize = 520;
+        const ratio = Math.min(maxSize / image.width, maxSize / image.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * ratio));
+        canvas.height = Math.max(1, Math.round(image.height * ratio));
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("Nao foi possivel preparar a imagem."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.76));
+      };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function Home() {
@@ -574,6 +603,26 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name })
     });
+  }
+
+  async function updateProductImage(file?: File) {
+    if (!product || !file) return;
+
+    const imageUrl = await resizeProductImage(file);
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business?.id
+          ? { ...biz, products: biz.products.map((item) => (item.id === product.id ? { ...item, imageUrl } : item)) }
+          : biz
+      )
+    );
+
+    await fetch(`/api/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl })
+    });
+    showToast("Foto do produto salva");
   }
 
   function saveBusinessVideoTypes(types: string[]) {
@@ -1433,6 +1482,7 @@ export default function Home() {
             <div className="product-selector">
               <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
               <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
+                {product?.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}
                 <span>
                   <strong>{product?.name ?? "Nenhum produto"}</strong>
                 </span>
@@ -1459,6 +1509,19 @@ export default function Home() {
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
               </button>
+              <label className={`secondary product-photo-button ${!product ? "disabled" : ""}`}>
+                Foto
+                <input
+                  accept="image/*"
+                  disabled={!product}
+                  hidden
+                  type="file"
+                  onChange={async (event) => {
+                    await updateProductImage(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
             </div>
           </section>
 
@@ -1487,6 +1550,7 @@ export default function Home() {
                       closeEditor();
                     }}
                   >
+                    {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
                     <strong>{item.name}</strong>
                   </button>
                 ))}

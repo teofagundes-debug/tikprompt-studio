@@ -103,6 +103,7 @@ type AiUsageSummary = {
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechRoleOptions = ["Gancho", "Interesse", "CTA"];
+const approximateUsdBrlRate = 5.5;
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
 const speechDividerPattern = /^\s*[-=]{3,}\s*$/m;
 const customVideoTypesKey = "tikprompt-video-types";
@@ -260,6 +261,15 @@ function formatDate(value?: string | null) {
 
 function formatUsd(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD", minimumFractionDigits: 4 }).format(value || 0);
+}
+
+function formatApproxBrlFromUsd(value: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }).format((value || 0) * approximateUsdBrlRate);
+}
+
+function scriptGroupNumber(value?: string | null) {
+  const match = String(value ?? "").match(/(\d+)/);
+  return match ? Number(match[1]) : "";
 }
 
 function daysUntil(value?: string | null) {
@@ -1424,6 +1434,7 @@ export default function Home() {
                   <div className="ai-usage-grid">
                     <div>
                       <strong>{formatUsd(aiUsage?.month.estimatedCostUsd ?? 0)}</strong>
+                      <em>{formatApproxBrlFromUsd(aiUsage?.month.estimatedCostUsd ?? 0)} aprox.</em>
                       <span>custo estimado no mês</span>
                     </div>
                     <div>
@@ -1432,6 +1443,7 @@ export default function Home() {
                     </div>
                     <div>
                       <strong>{formatUsd(aiUsage?.total.estimatedCostUsd ?? 0)}</strong>
+                      <em>{formatApproxBrlFromUsd(aiUsage?.total.estimatedCostUsd ?? 0)} aprox.</em>
                       <span>custo estimado total</span>
                     </div>
                   </div>
@@ -1443,7 +1455,7 @@ export default function Home() {
                           <small>{item.email}</small>
                         </span>
                         <span>{item.requests} usos</span>
-                        <strong>{formatUsd(item.estimatedCostUsd)}</strong>
+                        <strong>{formatUsd(item.estimatedCostUsd)} / {formatApproxBrlFromUsd(item.estimatedCostUsd)}</strong>
                       </div>
                     ))}
                     {aiUsage && !aiUsage.byUser.length && <p className="empty-state">Nenhum uso de IA registrado neste mês.</p>}
@@ -1841,10 +1853,6 @@ export default function Home() {
                       <span className="field-label">Nome do card</span>
                       <input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
                     </label>
-                    <label className="field">
-                      <span className="field-label">Rótulo / descrição</span>
-                      <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
-                    </label>
                     {draft.category === "Video" && (
                       <label className="field">
                         <span className="field-label">Identificação do bloco</span>
@@ -1870,21 +1878,24 @@ export default function Home() {
                       </label>
                     )}
                     {draft.category === "Video" && (
-                      <label className="field">
+                      <label className="field compact-number-field">
                         <span className="field-label">Video / grupo</span>
                         <input
-                          value={draft.scriptGroup ?? ""}
-                          onChange={(event) => setDraft({ ...draft, scriptGroup: event.target.value })}
-                          placeholder="Ex: Video 1"
+                          value={scriptGroupNumber(draft.scriptGroup)}
+                          max={99}
+                          min={1}
+                          onChange={(event) => setDraft({ ...draft, scriptGroup: `Video ${Number(event.target.value) || 1}` })}
+                          type="number"
                         />
                       </label>
                     )}
                     {draft.category === "Video" && (
-                      <label className="field">
+                      <label className="field compact-number-field">
                         <span className="field-label">Ordem da parte</span>
                         <input
                           value={draft.takeOrder ?? ""}
                           onChange={(event) => setDraft({ ...draft, takeOrder: Number(event.target.value) || null })}
+                          max={99}
                           min={1}
                           type="number"
                         />

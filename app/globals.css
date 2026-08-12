@@ -469,6 +469,7 @@ input:disabled {
 }
 
 .ai-usage-grid strong,
+.ai-usage-grid em,
 .ai-usage-grid span,
 .ai-usage-list strong,
 .ai-usage-list span,
@@ -478,6 +479,14 @@ input:disabled {
 
 .ai-usage-grid strong {
   font-size: 18px;
+}
+
+.ai-usage-grid em {
+  color: #0b8f83;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+  margin-top: 2px;
 }
 
 .ai-usage-grid span,
@@ -1687,8 +1696,9 @@ input:disabled {
 
 .card-meta-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
-  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(130px, 0.45fr) minmax(180px, 0.68fr) 92px 92px;
+  gap: 8px;
+  align-items: end;
 }
 
 .field,
@@ -1708,8 +1718,12 @@ textarea {
 
 .field input,
 .field select {
-  height: 40px;
-  padding: 0 10px;
+  height: 36px;
+  padding: 0 9px;
+}
+
+.compact-number-field input {
+  text-align: center;
 }
 
 textarea {

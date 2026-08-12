@@ -1008,6 +1008,42 @@ input:disabled {
   z-index: 10;
 }
 
+.product-description-box {
+  margin: 10px 24px 0;
+  border: 1px solid rgba(11, 143, 131, 0.22);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(222, 247, 244, 0.78), rgba(255, 250, 240, 0.9));
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.product-description-box strong,
+.product-description-box small {
+  display: block;
+}
+
+.product-description-box strong {
+  font-size: 13px;
+}
+
+.product-description-box small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+.product-description-box textarea {
+  min-height: 74px;
+  max-height: 126px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  padding: 10px;
+}
+
 .tabs-row {
   grid-template-columns: minmax(0, 1fr) auto;
 }

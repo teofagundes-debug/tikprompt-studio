@@ -29,7 +29,11 @@ export async function createDefaultLibrary(userId: string) {
   });
 
   const product = await prisma.product.create({
-    data: { name: "Vestido Midi etc...", businessId: business.id }
+    data: {
+      name: "Vestido Midi etc...",
+      description: "Descreva aqui o produto, tecido, cores, diferenciais e benefícios visíveis para orientar a IA ao criar as falas.",
+      businessId: business.id
+    }
   });
 
   await prisma.prompt.createMany({

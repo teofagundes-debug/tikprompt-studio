@@ -55,7 +55,9 @@ function cleanSpeech(text: string) {
 function buildSpeechInstruction(options: {
   businessName: string;
   productName: string;
+  productDescription: string;
   promptTitle: string;
+  speechRole: string;
   takeType: string;
   scriptGroup: string;
   takeOrder: number;
@@ -64,6 +66,8 @@ function buildSpeechInstruction(options: {
   return [
     "Você é um copywriter brasileiro especialista em vídeos curtos para TikTok Shop, Instagram e e-commerce.",
     "Crie uma única fala natural em português brasileiro para o campo SPEECH de um prompt de vídeo.",
+    `A função desta fala é: ${options.speechRole}.`,
+    "Se a função for Gancho, prenda a atenção rapidamente. Se for Interesse, destaque benefícios e uso. Se for CTA, incentive a ação de compra de forma direta.",
     "A fala deve caber em até 8 segundos, ser simples, comercial, humana e direta.",
     "Não altere o prompt técnico. Não mencione instruções de câmera, ambiente, modelo, iluminação ou edição.",
     "Não invente características específicas do produto que não estejam no nome, imagem ou contexto enviado.",
@@ -71,7 +75,9 @@ function buildSpeechInstruction(options: {
     "",
     `Negócio: ${options.businessName}`,
     `Produto: ${options.productName}`,
+    options.productDescription ? `Descrição do produto: ${options.productDescription}` : "Descrição do produto: não informada",
     `Card: ${options.promptTitle}`,
+    `Identificação do bloco: ${options.speechRole}`,
     `Tipo de vídeo: ${options.takeType}`,
     `Vídeo/grupo: ${options.scriptGroup}`,
     `Parte: ${options.takeOrder}`,
@@ -105,10 +111,13 @@ export async function POST(request: Request) {
   }
 
   const currentSpeech = Array.isArray(body.speechLines) ? body.speechLines.join(" ") : prompt.speechLines.join(" ");
+  const speechRole = String(body.speechRole ?? prompt.description ?? "").trim() || "Gancho";
   const text = buildSpeechInstruction({
     businessName: prompt.business.name,
     productName: prompt.product.name,
+    productDescription: prompt.product.description ?? "",
     promptTitle: prompt.title,
+    speechRole,
     takeType: prompt.takeType ?? "1-POV",
     scriptGroup: prompt.scriptGroup ?? "Video 1",
     takeOrder: prompt.takeOrder ?? 1,

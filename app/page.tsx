@@ -29,6 +29,7 @@ type Prompt = {
 type Product = {
   id: string;
   name: string;
+  description: string;
   imageUrl: string | null;
   prompts: Prompt[];
 };
@@ -101,6 +102,7 @@ type AiUsageSummary = {
 
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
+const speechRoleOptions = ["Gancho", "Interesse", "CTA", "Demonstração", "Prova social", "Oferta"];
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
 const speechDividerPattern = /^\s*[-=]{3,}\s*$/m;
 const customVideoTypesKey = "tikprompt-video-types";
@@ -140,6 +142,20 @@ function inferTakeOrder(title: string) {
   if (normalized.startsWith("cta")) return 3;
   const match = normalized.match(/(?:take|parte)\s*(\d+)/);
   return match ? Number(match[1]) : 99;
+}
+
+function inferSpeechRole(prompt: Pick<Prompt, "title" | "description" | "takeOrder">) {
+  const text = `${prompt.description} ${prompt.title}`.toLowerCase();
+  if (text.includes("gancho") || text.includes("gatilho")) return "Gancho";
+  if (text.includes("interesse") || text.includes("benef")) return "Interesse";
+  if (text.includes("cta") || text.includes("carrinho") || text.includes("chamada")) return "CTA";
+  if (text.includes("prova")) return "Prova social";
+  if (text.includes("oferta")) return "Oferta";
+  if (text.includes("demonstra")) return "Demonstração";
+  if (prompt.takeOrder === 1) return "Gancho";
+  if (prompt.takeOrder === 2) return "Interesse";
+  if (prompt.takeOrder === 3) return "CTA";
+  return "Gancho";
 }
 
 function scriptGroupForPrompt(prompt: Prompt) {
@@ -355,6 +371,7 @@ export default function Home() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
   const [generatingSpeech, setGeneratingSpeech] = useState(false);
@@ -508,6 +525,10 @@ export default function Home() {
   }, [category, videoTakeType, videoTypeOptions]);
 
   useEffect(() => {
+    setProductDescriptionDraft(product?.description ?? "");
+  }, [product?.id, product?.description]);
+
+  useEffect(() => {
     if (prompts.length && !prompts.some((prompt) => prompt.id === promptId)) {
       setPromptId(prompts[0].id);
     }
@@ -633,6 +654,22 @@ export default function Home() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name })
+    });
+  }
+
+  async function updateProductDescription(description: string) {
+    if (!product) return;
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business?.id
+          ? { ...biz, products: biz.products.map((item) => (item.id === product.id ? { ...item, description } : item)) }
+          : biz
+      )
+    );
+    await fetch(`/api/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description })
     });
   }
 
@@ -801,7 +838,7 @@ export default function Home() {
       const response = await fetch("/api/ai/speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptId: draft.id, speechLines: draft.speechLines })
+        body: JSON.stringify({ promptId: draft.id, speechLines: draft.speechLines, speechRole: inferSpeechRole(draft) })
       });
       const data = await readJson(response);
 
@@ -1628,6 +1665,25 @@ export default function Home() {
             </div>
           </section>
 
+          {product && (
+            <label className="product-description-box">
+              <span>
+                <strong>Descrição do produto para IA</strong>
+                <small>Informe tecido, cores, diferenciais, benefícios e detalhes visíveis para orientar a criação da fala.</small>
+              </span>
+              <textarea
+                value={productDescriptionDraft}
+                onBlur={() => {
+                  if (productDescriptionDraft !== (product.description ?? "")) {
+                    updateProductDescription(productDescriptionDraft);
+                  }
+                }}
+                onChange={(event) => setProductDescriptionDraft(event.target.value)}
+                placeholder="Ex: Vestido midi em viscose, alça fina, caimento leve, disponível em várias cores, ideal para verão..."
+              />
+            </label>
+          )}
+
           {productPickerOpen && (
             <section className="product-picker">
               <div className="product-picker-head">
@@ -1793,6 +1849,18 @@ export default function Home() {
                       <span className="field-label">Rótulo / descrição</span>
                       <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
                     </label>
+                    {draft.category === "Video" && (
+                      <label className="field">
+                        <span className="field-label">Identificação do bloco</span>
+                        <select value={inferSpeechRole(draft)} onChange={(event) => setDraft({ ...draft, description: event.target.value })}>
+                          {speechRoleOptions.map((item) => (
+                            <option value={item} key={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                     {draft.category === "Video" && (
                       <label className="field">
                         <span className="field-label">Tipo de video</span>

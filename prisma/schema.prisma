@@ -50,6 +50,7 @@ model User {
 model Product {
   id         String   @id @default(cuid())
   name       String
+  description String   @default("")
   imageUrl   String?
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

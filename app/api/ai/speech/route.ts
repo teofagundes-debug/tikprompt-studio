@@ -11,16 +11,36 @@ type OpenAIUsage = {
 };
 
 function outputText(data: unknown) {
-  const response = data as { output_text?: string; output?: Array<{ content?: Array<{ text?: string; type?: string }> }> };
+  const response = data as {
+    output_text?: string;
+    output?: Array<{ content?: Array<{ text?: string; type?: string; refusal?: string }> }>;
+  };
   if (response.output_text) return response.output_text.trim();
 
-  return (
+  const directText =
     response.output
       ?.flatMap((item) => item.content ?? [])
-      .map((content) => content.text ?? "")
+      .map((content) => content.text ?? content.refusal ?? "")
       .join("\n")
-      .trim() ?? ""
-  );
+      .trim() ?? "";
+
+  if (directText) return directText;
+
+  const found: string[] = [];
+  const visit = (value: unknown) => {
+    if (!value || found.length) return;
+    if (typeof value !== "object") return;
+    for (const [key, entry] of Object.entries(value)) {
+      if ((key === "text" || key === "output_text") && typeof entry === "string" && entry.trim()) {
+        found.push(entry.trim());
+        return;
+      }
+      if (typeof entry === "object") visit(entry);
+    }
+  };
+  visit(data);
+
+  return found[0] ?? "";
 }
 
 function cleanSpeech(text: string) {
@@ -109,7 +129,9 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       model: aiSpeechModel,
       input: [{ role: "user", content }],
-      max_output_tokens: 120,
+      reasoning: { effort: "minimal" },
+      text: { verbosity: "low" },
+      max_output_tokens: 300,
       store: false
     })
   });
@@ -122,7 +144,10 @@ export async function POST(request: Request) {
 
   const speech = cleanSpeech(outputText(data));
   if (!speech) {
-    return NextResponse.json({ error: "A IA não retornou uma fala válida." }, { status: 502 });
+    const status = typeof data?.status === "string" ? data.status : "";
+    const details = typeof data?.incomplete_details?.reason === "string" ? data.incomplete_details.reason : "";
+    const suffix = [status, details].filter(Boolean).join(" - ");
+    return NextResponse.json({ error: `A IA não retornou uma fala válida.${suffix ? ` ${suffix}` : ""}` }, { status: 502 });
   }
 
   const usage = (data.usage ?? {}) as OpenAIUsage;
@@ -154,4 +179,3 @@ export async function POST(request: Request) {
     }
   });
 }
-

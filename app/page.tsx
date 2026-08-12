@@ -102,7 +102,7 @@ type AiUsageSummary = {
 
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
-const speechRoleOptions = ["Gancho", "Interesse", "CTA", "Demonstração", "Prova social", "Oferta"];
+const speechRoleOptions = ["Gancho", "Interesse", "CTA"];
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
 const speechDividerPattern = /^\s*[-=]{3,}\s*$/m;
 const customVideoTypesKey = "tikprompt-video-types";
@@ -149,13 +149,9 @@ function inferSpeechRole(prompt: Pick<Prompt, "title" | "description" | "takeOrd
   if (text.includes("gancho") || text.includes("gatilho")) return "Gancho";
   if (text.includes("interesse") || text.includes("benef")) return "Interesse";
   if (text.includes("cta") || text.includes("carrinho") || text.includes("chamada")) return "CTA";
-  if (text.includes("prova")) return "Prova social";
-  if (text.includes("oferta")) return "Oferta";
-  if (text.includes("demonstra")) return "Demonstração";
   if (prompt.takeOrder === 1) return "Gancho";
-  if (prompt.takeOrder === 2) return "Interesse";
   if (prompt.takeOrder === 3) return "CTA";
-  return "Gancho";
+  return "Interesse";
 }
 
 function scriptGroupForPrompt(prompt: Prompt) {

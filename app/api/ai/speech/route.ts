@@ -68,7 +68,9 @@ function buildSpeechInstruction(options: {
     "Crie uma única fala natural em português brasileiro para o campo SPEECH de um prompt de vídeo.",
     `A função desta fala é: ${options.speechRole}.`,
     "Se a função for Gancho, prenda a atenção rapidamente. Se for Interesse, destaque benefícios e uso. Se for CTA, incentive a ação de compra de forma direta.",
-    "A fala deve caber em até 8 segundos e soar como uma pessoa real vendendo em rede social.",
+    "A fala deve durar entre 6 e 8 segundos em ritmo natural de conversa.",
+    "Use uma única frase curta, com 13 a 18 palavras no máximo.",
+    "Não junte várias ideias na mesma fala; escolha uma ideia forte e diga de forma fluida.",
     "Use uma linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop.",
     "Varie bastante o ângulo de venda e evite repetir estruturas comuns ou frases genéricas.",
     "Explore desejo, curiosidade, ocasião de uso, transformação visual, objeções comuns e benefícios percebidos.",
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
       input: [{ role: "user", content }],
       reasoning: { effort: "minimal" },
       text: { verbosity: "low" },
-      max_output_tokens: 300,
+      max_output_tokens: 160,
       store: false
     })
   });

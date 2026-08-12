@@ -23,7 +23,8 @@ export async function GET() {
         DATABASE_URL: Boolean(process.env.DATABASE_URL),
         AUTH_SECRET: Boolean(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET),
         WEBHOOK_SECRET: Boolean(process.env.WEBHOOK_SECRET),
-        APP_URL: Boolean(process.env.APP_URL)
+        APP_URL: Boolean(process.env.APP_URL),
+        OPENAI_API_KEY: Boolean(process.env.OPENAI_API_KEY)
       },
       responseMs: Date.now() - startedAt
     });
@@ -40,7 +41,8 @@ export async function GET() {
           DATABASE_URL: Boolean(process.env.DATABASE_URL),
           AUTH_SECRET: Boolean(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET),
           WEBHOOK_SECRET: Boolean(process.env.WEBHOOK_SECRET),
-          APP_URL: Boolean(process.env.APP_URL)
+          APP_URL: Boolean(process.env.APP_URL),
+          OPENAI_API_KEY: Boolean(process.env.OPENAI_API_KEY)
         },
         details,
         responseMs: Date.now() - startedAt

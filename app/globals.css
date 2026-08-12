@@ -446,6 +446,62 @@ input:disabled {
   padding: 16px;
 }
 
+.ai-usage-panel {
+  border: 1px solid rgba(9, 128, 116, 0.22);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #f0fbf8, #fffaf0);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.ai-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ai-usage-grid div {
+  border: 1px solid rgba(9, 128, 116, 0.16);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 10px;
+}
+
+.ai-usage-grid strong,
+.ai-usage-grid span,
+.ai-usage-list strong,
+.ai-usage-list span,
+.ai-usage-list small {
+  display: block;
+}
+
+.ai-usage-grid strong {
+  font-size: 18px;
+}
+
+.ai-usage-grid span,
+.ai-usage-list span,
+.ai-usage-list small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ai-usage-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.ai-usage-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid rgba(9, 128, 116, 0.12);
+  padding-top: 7px;
+}
+
 .access-box {
   min-height: 120px;
   resize: vertical;
@@ -1641,6 +1697,14 @@ textarea {
 .speech-card-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.speech-title {
+  display: flex;
+  align-items: center;
   gap: 9px;
   flex-wrap: wrap;
 }
@@ -1658,6 +1722,22 @@ textarea {
 .speech-hint {
   color: #a9a096;
   font-size: 12px;
+}
+
+.speech-ai-button {
+  border: 1px solid rgba(245, 200, 76, 0.42);
+  background: #f1b24d;
+  color: #111413;
+  border-radius: var(--radius-sm);
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.speech-ai-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 .speech-card textarea {

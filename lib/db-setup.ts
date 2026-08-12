@@ -82,6 +82,21 @@ export async function ensureDatabaseSchema() {
     );
   `);
 
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "AiUsage" (
+      "id" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "promptId" TEXT,
+      "productName" TEXT,
+      "model" TEXT NOT NULL,
+      "inputTokens" INTEGER NOT NULL DEFAULT 0,
+      "outputTokens" INTEGER NOT NULL DEFAULT 0,
+      "estimatedCostUsd" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "AiUsage_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Product_businessId_idx" ON "Product"("businessId");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_businessId_idx" ON "Prompt"("businessId");`);
@@ -100,6 +115,8 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "User_expiresAt_idx" ON "User"("expiresAt");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Business_userId_idx" ON "Business"("userId");`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AiUsage_userId_idx" ON "AiUsage"("userId");`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AiUsage_createdAt_idx" ON "AiUsage"("createdAt");`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = '1-POV' WHERE "category" = 'Video' AND "takeType" IS NULL;`);
   await prisma.$executeRawUnsafe(`UPDATE "Prompt" SET "takeType" = 'varios takes' WHERE "takeType" = '3 takes';`);
 
@@ -121,6 +138,15 @@ export async function ensureDatabaseSchema() {
         ALTER TABLE "Product"
         ADD CONSTRAINT "Product_businessId_fkey"
         FOREIGN KEY ("businessId") REFERENCES "Business"("id")
+        ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'AiUsage_userId_fkey'
+      ) THEN
+        ALTER TABLE "AiUsage"
+        ADD CONSTRAINT "AiUsage_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id")
         ON DELETE CASCADE ON UPDATE CASCADE;
       END IF;
     END $$;

@@ -74,6 +74,31 @@ type AdminUser = {
   _count: { businesses: number };
 };
 
+type AiUsageSummary = {
+  model: string;
+  total: {
+    requests: number;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+  };
+  month: {
+    requests: number;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+  };
+  byUser: Array<{
+    userId: string;
+    name: string;
+    email: string;
+    requests: number;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+  }>;
+};
+
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
@@ -221,6 +246,10 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
 }
 
+function formatUsd(value: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD", minimumFractionDigits: 4 }).format(value || 0);
+}
+
 function daysUntil(value?: string | null) {
   if (!value) return null;
   const today = new Date();
@@ -309,6 +338,7 @@ export default function Home() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [aiUsage, setAiUsage] = useState<AiUsageSummary | null>(null);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPhone, setNewUserPhone] = useState("");
@@ -327,6 +357,7 @@ export default function Home() {
   const [productSearch, setProductSearch] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
+  const [generatingSpeech, setGeneratingSpeech] = useState(false);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
@@ -762,6 +793,35 @@ export default function Home() {
     showToast("Edição salva");
   }
 
+  async function generateSpeech() {
+    if (!draft || draft.category !== "Video") return;
+
+    setGeneratingSpeech(true);
+    try {
+      const response = await fetch("/api/ai/speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promptId: draft.id, speechLines: draft.speechLines })
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        showToast(data.error ?? "Não foi possível gerar a fala");
+        return;
+      }
+
+      const speechLines = data.speechLines?.length ? data.speechLines : [data.speech].filter(Boolean);
+      setDraft({
+        ...draft,
+        speechLines,
+        template: syncSpeechSection(draft.template, speechLines)
+      });
+      showToast("Fala gerada. Revise e salve.");
+    } finally {
+      setGeneratingSpeech(false);
+    }
+  }
+
   async function moveVideoPrompt(promptToMoveId: string, targetGroup: string, targetPromptId?: string) {
     if (!promptToMoveId || promptToMoveId === targetPromptId) return;
 
@@ -923,10 +983,17 @@ export default function Home() {
     setAdminUsers(data.users);
   }
 
+  async function loadAiUsage() {
+    const response = await fetch("/api/admin/ai-usage", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await readJson(response);
+    setAiUsage(data);
+  }
+
   async function openAdmin() {
     setView("admin");
     closeEditor();
-    await loadAdminUsers();
+    await Promise.all([loadAdminUsers(), loadAiUsage()]);
   }
 
   function openBusiness(businessItem: Business) {
@@ -1283,7 +1350,7 @@ export default function Home() {
                 <h1>Gestão de usuários</h1>
                 <p>Crie acessos, gere senha temporária e bloqueie clientes quando necessário.</p>
               </div>
-              <button className="secondary" onClick={loadAdminUsers}>
+              <button className="secondary" onClick={() => Promise.all([loadAdminUsers(), loadAiUsage()])}>
                 Atualizar
               </button>
             </header>
@@ -1314,6 +1381,42 @@ export default function Home() {
               </form>
 
               <section className="admin-users">
+                <div className="ai-usage-panel">
+                  <div className="panel-head">
+                    <div>
+                      <h2>Uso de IA</h2>
+                      <span>Estimativa interna do modelo {aiUsage?.model ?? "gpt-5-nano"}</span>
+                    </div>
+                  </div>
+                  <div className="ai-usage-grid">
+                    <div>
+                      <strong>{formatUsd(aiUsage?.month.estimatedCostUsd ?? 0)}</strong>
+                      <span>custo estimado no mês</span>
+                    </div>
+                    <div>
+                      <strong>{aiUsage?.month.requests ?? 0}</strong>
+                      <span>gerações no mês</span>
+                    </div>
+                    <div>
+                      <strong>{formatUsd(aiUsage?.total.estimatedCostUsd ?? 0)}</strong>
+                      <span>custo estimado total</span>
+                    </div>
+                  </div>
+                  <div className="ai-usage-list">
+                    {aiUsage?.byUser.map((item) => (
+                      <div key={item.userId}>
+                        <span>
+                          <strong>{item.name}</strong>
+                          <small>{item.email}</small>
+                        </span>
+                        <span>{item.requests} usos</span>
+                        <strong>{formatUsd(item.estimatedCostUsd)}</strong>
+                      </div>
+                    ))}
+                    {aiUsage && !aiUsage.byUser.length && <p className="empty-state">Nenhum uso de IA registrado neste mês.</p>}
+                  </div>
+                </div>
+
                 <div className="panel-head">
                   <div>
                     <h2>Usuários</h2>
@@ -1728,8 +1831,13 @@ export default function Home() {
                   {draft.lineTokenPrefix && (
                     <section className="speech-card">
                       <div className="speech-card-head">
-                        <span className="speech-pill">{draft.lineSectionTitle ?? "SPEECH (Portuguese BR)"}</span>
-                        <span className="speech-hint">{draft.lineHelp ?? "Campo de edição rápida"}</span>
+                        <div className="speech-title">
+                          <span className="speech-pill">{draft.lineSectionTitle ?? "SPEECH (Portuguese BR)"}</span>
+                          <span className="speech-hint">{draft.lineHelp ?? "Campo de edição rápida"}</span>
+                        </div>
+                        <button className="speech-ai-button" onClick={generateSpeech} disabled={generatingSpeech} type="button">
+                          {generatingSpeech ? "Gerando..." : "Criar / Regenerar fala"}
+                        </button>
                       </div>
                       <textarea
                         value={draft.speechLines.join("\n\n")}

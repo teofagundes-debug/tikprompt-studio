@@ -1918,14 +1918,14 @@ export default function Home() {
                       </div>
                       <div className="script-group-actions">
                         <button
-                          className="secondary"
+                          className="secondary ai-video-button"
                           disabled={generatingVideoSpeechGroup === group.scriptGroup}
                           onClick={() => generateVideoSpeechPreview(group.scriptGroup, group.prompts)}
                         >
-                          {generatingVideoSpeechGroup === group.scriptGroup ? "Gerando..." : "Gerar falas"}
+                          {generatingVideoSpeechGroup === group.scriptGroup ? "Gerando..." : "Gerar falas IA"}
                         </button>
-                        <button className="secondary" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
-                          Duplicar video
+                        <button className="secondary duplicate-video-button" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
+                          Duplicar
                         </button>
                       </div>
                     </div>

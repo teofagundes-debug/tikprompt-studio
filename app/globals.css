@@ -1447,15 +1447,19 @@ input:disabled {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
+.library-only .script-group {
+  grid-column: 1 / -1;
+}
+
 .script-group {
   border: 1px solid var(--script-border, var(--line));
   border-radius: var(--radius);
   background: var(--script-bg, #fbfcfc);
-  padding: 8px;
+  padding: 10px;
   display: grid;
   align-content: start;
   align-self: start;
-  gap: 8px;
+  gap: 10px;
 }
 
 .script-group:nth-child(6n + 1) {
@@ -1489,7 +1493,7 @@ input:disabled {
 }
 
 .script-group-head {
-  min-height: 40px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1498,7 +1502,7 @@ input:disabled {
 
 .script-group-head h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .script-group-head span {
@@ -1515,11 +1519,29 @@ input:disabled {
   justify-content: flex-end;
 }
 
+.ai-video-button {
+  border-color: #0b8f83;
+  background: #101312;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(11, 143, 131, 0.16);
+}
+
+.ai-video-button:hover {
+  background: #0b8f83;
+}
+
+.duplicate-video-button {
+  min-height: 32px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
 .script-group-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 220px));
   gap: 8px;
   align-items: start;
+  justify-content: start;
 }
 
 .script-group.drop-ready {

@@ -1277,7 +1277,7 @@ export default function Home() {
             ))}
           {isVideoCard && <span className="chip strong-chip">{`${scriptGroupLabel(scriptGroupForPrompt(prompt))} - Parte ${takeOrderForPrompt(prompt)}`}</span>}
         </div>
-        <div className="prompt-actions">
+        <div className={`prompt-actions ${isVideoCard ? "video-actions" : ""}`}>
           <button className="prompt-action copy" onClick={() => copyPrompt(prompt)} title="Copia o prompt pronto para colar na ferramenta de IA.">
             Copiar
           </button>
@@ -1292,13 +1292,21 @@ export default function Home() {
           >
             Editar
           </button>
-          <button className="prompt-action" onClick={() => duplicatePrompt(prompt)} title="Cria uma copia deste card para voce adaptar uma nova variacao. Depois, arraste o card para a posicao desejada.">
-            Duplicar
-          </button>
+          {!isVideoCard && (
+            <button className="prompt-action" onClick={() => duplicatePrompt(prompt)} title="Cria uma copia deste card para voce adaptar uma nova variacao.">
+              Duplicar
+            </button>
+          )}
           <button className="prompt-action danger" onClick={() => deletePrompt(prompt)} title="Remove este card da biblioteca.">
             Excluir
           </button>
-          <HelpDot text={"Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nDuplicar cria uma variacao reaproveitando o prompt.\nEm videos, arraste o card para mudar de video ou alterar a ordem das partes.\nExcluir remove o card."} />
+          <HelpDot
+            text={
+              isVideoCard
+                ? "Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nEm videos, arraste o card para mudar de video ou alterar a ordem das partes.\nExcluir remove o card."
+                : "Menu do card:\nCopiar envia o prompt para a area de transferencia.\nEditar abre os campos de ajuste.\nDuplicar cria uma variacao reaproveitando o prompt.\nExcluir remove o card."
+            }
+          />
         </div>
       </article>
     );
@@ -1729,16 +1737,23 @@ export default function Home() {
               <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
                 {product?.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}
                 <span>
+                  <small>Produto selecionado</small>
                   <strong>{product?.name ?? "Nenhum produto"}</strong>
                 </span>
                 <span className="product-current-arrow">v</span>
               </button>
             </div>
-            <label className="field">
-              <span className="field-label">Editar nome</span>
-              <input value={product?.name ?? ""} onChange={(event) => renameProduct(event.target.value)} disabled={!product} />
-            </label>
             <div className="action-row">
+              <button
+                className="secondary"
+                disabled={!product}
+                onClick={() => {
+                  const nextName = window.prompt("Editar nome do produto", product?.name ?? "");
+                  if (nextName !== null) renameProduct(nextName);
+                }}
+              >
+                Editar produto
+              </button>
               <span className="action-help-wrap">
                 <button className="secondary" onClick={createProduct}>
                   Criar produto
@@ -1755,7 +1770,7 @@ export default function Home() {
                 Excluir
               </button>
               <label className={`secondary product-photo-button ${!product ? "disabled" : ""}`}>
-                Foto
+                Alterar foto
                 <input
                   accept="image/*"
                   disabled={!product}
@@ -1881,9 +1896,7 @@ export default function Home() {
             <div className="panel-head">
               <div>
                 <h2>Biblioteca</h2>
-                <span>
-                  {prompts.length} itens em {product?.name ?? "sem produto"} / {categoryTabLabel(category)}
-                </span>
+                <span>{prompts.length} {prompts.length === 1 ? "item" : "itens"} em {product?.name ?? "sem produto"} / {categoryTabLabel(category)}</span>
               </div>
               <span className="action-help-wrap">
                 <button className="secondary" onClick={createPrompt} disabled={!product}>

@@ -1006,7 +1006,7 @@ input:disabled {
 .product-row,
 .tabs-row {
   display: grid;
-  grid-template-columns: minmax(280px, 560px) 250px auto;
+  grid-template-columns: minmax(320px, 630px) auto;
   align-items: end;
   gap: 12px;
   padding: 12px 24px 0;
@@ -1032,6 +1032,15 @@ input:disabled {
 .product-description-box strong,
 .product-description-box small {
   display: block;
+}
+
+.product-description-box span::after {
+  content: "Salvo automaticamente ao sair do campo.";
+  display: block;
+  margin-top: 4px;
+  color: #0b8f83;
+  font-size: 11px;
+  font-weight: 850;
 }
 
 .product-description-box strong {
@@ -1154,6 +1163,15 @@ input:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+}
+
+.product-current small {
+  display: block;
+  margin-bottom: 2px;
+  color: #0b746b;
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .product-current-arrow {
@@ -1496,7 +1514,7 @@ input:disabled {
   min-height: 34px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
 }
 
@@ -1516,24 +1534,25 @@ input:disabled {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .ai-video-button {
-  border-color: #0b8f83;
-  background: #101312;
+  border-color: #1d6bff;
+  background: linear-gradient(135deg, #1d6bff, #00b7ff);
   color: #fff;
-  box-shadow: 0 8px 20px rgba(11, 143, 131, 0.16);
+  box-shadow: 0 10px 24px rgba(29, 107, 255, 0.24);
 }
 
 .ai-video-button:hover {
-  background: #0b8f83;
+  background: linear-gradient(135deg, #1557d8, #009ee0);
 }
 
 .duplicate-video-button {
   min-height: 32px;
   padding: 0 9px;
   font-size: 12px;
+  opacity: 0.84;
 }
 
 .script-group-grid {
@@ -1678,6 +1697,10 @@ input:disabled {
   align-items: center;
 }
 
+.video-actions {
+  grid-template-columns: minmax(58px, 1.35fr) minmax(48px, 0.85fr) minmax(48px, 0.85fr);
+}
+
 .prompt-actions .help-dot {
   position: absolute;
   top: 8px;
@@ -1703,6 +1726,7 @@ input:disabled {
   background: var(--dark);
   border-color: var(--dark);
   color: #fff;
+  font-size: 11px;
 }
 
 .prompt-action.danger {

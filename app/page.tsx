@@ -103,6 +103,7 @@ type AiUsageSummary = {
 type VideoSpeechPreview = {
   scriptGroup: string;
   promptIds: string[];
+  avoidSpeeches: string[];
   items: Array<{
     promptId: string;
     title: string;
@@ -879,7 +880,7 @@ export default function Home() {
     }
   }
 
-  async function generateVideoSpeechPreview(scriptGroup: string, groupPrompts: Prompt[]) {
+  async function generateVideoSpeechPreview(scriptGroup: string, groupPrompts: Prompt[], avoidSpeeches: string[] = []) {
     if (!groupPrompts.length) return;
 
     setGeneratingVideoSpeechGroup(scriptGroup);
@@ -887,7 +888,7 @@ export default function Home() {
       const response = await fetch("/api/ai/video-speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptIds: groupPrompts.map((prompt) => prompt.id) })
+        body: JSON.stringify({ promptIds: groupPrompts.map((prompt) => prompt.id), avoidSpeeches })
       });
       const data = await readJson(response);
 
@@ -900,6 +901,7 @@ export default function Home() {
       setVideoSpeechPreview({
         scriptGroup,
         promptIds: groupPrompts.map((prompt) => prompt.id),
+        avoidSpeeches: [...avoidSpeeches, ...data.items.map((item: { speech: string }) => item.speech).filter(Boolean)].slice(-24),
         items: data.items.map((item: { promptId: string; speech: string }) => {
           const prompt = promptById.get(item.promptId);
           return {
@@ -931,7 +933,8 @@ export default function Home() {
   async function regenerateCurrentVideoSpeechPreview() {
     if (!videoSpeechPreview) return;
     const groupPrompts = prompts.filter((prompt) => videoSpeechPreview.promptIds.includes(prompt.id));
-    await generateVideoSpeechPreview(videoSpeechPreview.scriptGroup, groupPrompts);
+    const currentSpeeches = videoSpeechPreview.items.map((item) => item.speech).filter(Boolean);
+    await generateVideoSpeechPreview(videoSpeechPreview.scriptGroup, groupPrompts, [...videoSpeechPreview.avoidSpeeches, ...currentSpeeches]);
   }
 
   async function applyVideoSpeechPreview() {

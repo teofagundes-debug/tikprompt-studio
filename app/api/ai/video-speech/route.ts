@@ -54,6 +54,7 @@ function buildVideoInstruction(options: {
   productDescription: string;
   takeType: string;
   scriptGroup: string;
+  avoidSpeeches: string[];
   parts: Array<{
     promptId: string;
     title: string;
@@ -74,6 +75,9 @@ function buildVideoInstruction(options: {
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite aberturas como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
     "Use linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop, sem cara de propaganda engessada.",
+    options.avoidSpeeches.length
+      ? "IMPORTANTE: gere uma versao realmente nova, com angulo, abertura e escolha de palavras diferentes das falas anteriores listadas abaixo. Nao copie nem parafraseie de forma muito parecida."
+      : "Crie uma versao com angulo de venda claro e natural.",
     "Não invente dados objetivos específicos como tecido, composição, tamanho, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
     "Responda somente JSON válido neste formato: {\"items\":[{\"promptId\":\"id\",\"speech\":\"fala\"}]}",
     "",
@@ -84,6 +88,9 @@ function buildVideoInstruction(options: {
     `Vídeo/grupo: ${options.scriptGroup}`,
     "",
     "Partes do vídeo:",
+    ...(options.avoidSpeeches.length
+      ? ["Falas anteriores que devem ser evitadas:", ...options.avoidSpeeches.slice(-12).map((speech, index) => `${index + 1}. ${speech}`), ""]
+      : []),
     ...options.parts.map(
       (part) =>
         `- promptId=${part.promptId}; Parte ${part.takeOrder}; Função=${part.role}; Card=${part.title}; Fala atual=${part.currentSpeech || "vazia"}`
@@ -116,6 +123,9 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const promptIds = Array.isArray(body.promptIds) ? body.promptIds.map(String).filter(Boolean) : [];
+  const avoidSpeeches = Array.isArray(body.avoidSpeeches)
+    ? body.avoidSpeeches.map((item: unknown) => String(item).trim()).filter(Boolean).slice(-24)
+    : [];
   if (!promptIds.length) {
     return NextResponse.json({ error: "Informe os cards do vídeo." }, { status: 400 });
   }
@@ -141,6 +151,7 @@ export async function POST(request: Request) {
     productDescription: first.product.description ?? "",
     takeType: first.takeType ?? "1-POV",
     scriptGroup: first.scriptGroup ?? "Video 1",
+    avoidSpeeches,
     parts: prompts.map((prompt, index) => ({
       promptId: prompt.id,
       title: prompt.title,
@@ -166,6 +177,8 @@ export async function POST(request: Request) {
       input: [{ role: "user", content }],
       text: { format: { type: "json_object" } },
       max_output_tokens: 520,
+      temperature: avoidSpeeches.length ? 1.05 : 0.9,
+      top_p: 0.95,
       store: false
     })
   });

@@ -100,6 +100,17 @@ type AiUsageSummary = {
   }>;
 };
 
+type VideoSpeechPreview = {
+  scriptGroup: string;
+  items: Array<{
+    promptId: string;
+    title: string;
+    role: string;
+    takeOrder: number;
+    speech: string;
+  }>;
+};
+
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
 const speechRoleOptions = ["Gancho", "Interesse", "CTA"];
@@ -381,6 +392,8 @@ export default function Home() {
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
   const [generatingSpeech, setGeneratingSpeech] = useState(false);
+  const [generatingVideoSpeechGroup, setGeneratingVideoSpeechGroup] = useState("");
+  const [videoSpeechPreview, setVideoSpeechPreview] = useState<VideoSpeechPreview | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
@@ -863,6 +876,71 @@ export default function Home() {
     } finally {
       setGeneratingSpeech(false);
     }
+  }
+
+  async function generateVideoSpeechPreview(scriptGroup: string, groupPrompts: Prompt[]) {
+    if (!groupPrompts.length) return;
+
+    setGeneratingVideoSpeechGroup(scriptGroup);
+    try {
+      const response = await fetch("/api/ai/video-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promptIds: groupPrompts.map((prompt) => prompt.id) })
+      });
+      const data = await readJson(response);
+
+      if (!response.ok) {
+        showToast(data.error ?? "Não foi possível gerar as falas do vídeo");
+        return;
+      }
+
+      const promptById = new Map(groupPrompts.map((prompt) => [prompt.id, prompt]));
+      setVideoSpeechPreview({
+        scriptGroup,
+        items: data.items.map((item: { promptId: string; speech: string }) => {
+          const prompt = promptById.get(item.promptId);
+          return {
+            promptId: item.promptId,
+            title: prompt?.title ?? "Parte",
+            role: prompt ? inferSpeechRole(prompt) : "Interesse",
+            takeOrder: prompt ? takeOrderForPrompt(prompt) : 1,
+            speech: item.speech
+          };
+        })
+      });
+      showToast("Prévia gerada");
+    } finally {
+      setGeneratingVideoSpeechGroup("");
+    }
+  }
+
+  async function applyVideoSpeechPreview() {
+    if (!videoSpeechPreview) return;
+
+    const itemById = new Map(videoSpeechPreview.items.map((item) => [item.promptId, item]));
+    const promptsToUpdate = prompts.filter((prompt) => itemById.has(prompt.id));
+
+    await Promise.all(
+      promptsToUpdate.map((prompt) => {
+        const item = itemById.get(prompt.id);
+        const speechLines = item?.speech ? [item.speech] : prompt.speechLines;
+        return fetch(`/api/prompts/${prompt.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...prompt,
+            speechLines,
+            template: syncSpeechSection(prompt.template, speechLines)
+          })
+        });
+      })
+    );
+
+    setVideoSpeechPreview(null);
+    closeEditor();
+    await loadData();
+    showToast("Falas aplicadas ao vídeo");
   }
 
   async function moveVideoPrompt(promptToMoveId: string, targetGroup: string, targetPromptId?: string) {
@@ -1428,7 +1506,7 @@ export default function Home() {
                   <div className="panel-head">
                     <div>
                       <h2>Uso de IA</h2>
-                      <span>Estimativa interna do modelo {aiUsage?.model ?? "gpt-5-nano"}</span>
+                      <span>Estimativa interna do modelo {aiUsage?.model ?? "gpt-4o-mini"}</span>
                     </div>
                   </div>
                   <div className="ai-usage-grid">
@@ -1819,9 +1897,18 @@ export default function Home() {
                         <h3>{scriptGroupLabel(group.scriptGroup)}</h3>
                         <span>{group.prompts.length} partes neste video</span>
                       </div>
-                      <button className="secondary" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
-                        Duplicar video
-                      </button>
+                      <div className="script-group-actions">
+                        <button
+                          className="secondary"
+                          disabled={generatingVideoSpeechGroup === group.scriptGroup}
+                          onClick={() => generateVideoSpeechPreview(group.scriptGroup, group.prompts)}
+                        >
+                          {generatingVideoSpeechGroup === group.scriptGroup ? "Gerando..." : "Gerar falas"}
+                        </button>
+                        <button className="secondary" onClick={() => duplicateScriptGroup(group.scriptGroup, group.prompts)}>
+                          Duplicar video
+                        </button>
+                      </div>
                     </div>
                     <div className="script-group-grid">{group.prompts.map((prompt) => renderPromptCard(prompt, group.scriptGroup))}</div>
                   </section>
@@ -1961,6 +2048,39 @@ export default function Home() {
           </>
         )}
       </section>
+
+      {videoSpeechPreview && (
+        <section className="speech-preview-backdrop" role="dialog" aria-modal="true" aria-label="Prévia das falas do vídeo">
+          <div className="speech-preview-modal">
+            <div className="panel-head">
+              <div>
+                <h2>Prévia das falas</h2>
+                <span>{scriptGroupLabel(videoSpeechPreview.scriptGroup)} - revise antes de aplicar nos cards</span>
+              </div>
+              <button className="ghost" onClick={() => setVideoSpeechPreview(null)}>
+                Fechar
+              </button>
+            </div>
+            <div className="speech-preview-list">
+              {videoSpeechPreview.items.map((item) => (
+                <article key={item.promptId}>
+                  <span>{`Parte ${item.takeOrder} - ${item.role}`}</span>
+                  <strong>{item.title}</strong>
+                  <p>{item.speech}</p>
+                </article>
+              ))}
+            </div>
+            <div className="speech-preview-actions">
+              <button className="secondary" onClick={() => setVideoSpeechPreview(null)}>
+                Cancelar
+              </button>
+              <button className="primary" onClick={applyVideoSpeechPreview}>
+                Aplicar falas
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className={`toast ${toast ? "show" : ""}`}>{toast}</div>
     </main>

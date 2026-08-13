@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { aiSpeechModel } from "@/lib/ai-costs";
 import { requireAdmin } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +42,7 @@ export async function GET() {
   const usersById = new Map(users.map((user) => [user.id, user]));
 
   return NextResponse.json({
-    model: "gpt-5-nano",
+    model: aiSpeechModel,
     total: {
       requests: total._count,
       inputTokens: total._sum.inputTokens ?? 0,

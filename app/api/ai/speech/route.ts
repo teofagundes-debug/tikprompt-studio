@@ -72,7 +72,7 @@ function buildSpeechInstruction(options: {
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite frases de abertura como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
     "A fala deve durar entre 6 e 8 segundos em ritmo natural de conversa.",
-    "Use uma única frase curta, com 13 a 18 palavras no máximo.",
+    "Use uma única frase curta, com média de 20 palavras e limite máximo de 24 palavras.",
     "Não junte várias ideias na mesma fala; escolha uma ideia forte e diga de forma fluida.",
     "Use uma linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop.",
     "Varie bastante o ângulo de venda e evite repetir estruturas comuns ou frases genéricas.",
@@ -147,8 +147,6 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       model: aiSpeechModel,
       input: [{ role: "user", content }],
-      reasoning: { effort: "minimal" },
-      text: { verbosity: "low" },
       max_output_tokens: 160,
       store: false
     })

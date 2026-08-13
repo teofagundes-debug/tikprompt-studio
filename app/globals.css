@@ -1508,6 +1508,13 @@ input:disabled {
   font-size: 11px;
 }
 
+.script-group-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .script-group-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1806,6 +1813,71 @@ textarea {
   padding: 12px 14px;
   border-top: 1px solid var(--line);
   background: #fbfcfc;
+}
+
+.speech-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(8, 12, 10, 0.48);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.speech-preview-modal {
+  width: min(760px, 100%);
+  max-height: min(84vh, 720px);
+  overflow: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #fbfcfc;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
+}
+
+.speech-preview-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.speech-preview-list article {
+  border: 1px solid rgba(11, 143, 131, 0.22);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 12px;
+}
+
+.speech-preview-list span,
+.speech-preview-list strong,
+.speech-preview-list p {
+  display: block;
+}
+
+.speech-preview-list span {
+  color: #0b8f83;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.speech-preview-list strong {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.speech-preview-list p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.speech-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  background: #fff;
 }
 
 .toast {

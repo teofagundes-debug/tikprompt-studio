@@ -102,6 +102,7 @@ type AiUsageSummary = {
 
 type VideoSpeechPreview = {
   scriptGroup: string;
+  promptIds: string[];
   items: Array<{
     promptId: string;
     title: string;
@@ -898,6 +899,7 @@ export default function Home() {
       const promptById = new Map(groupPrompts.map((prompt) => [prompt.id, prompt]));
       setVideoSpeechPreview({
         scriptGroup,
+        promptIds: groupPrompts.map((prompt) => prompt.id),
         items: data.items.map((item: { promptId: string; speech: string }) => {
           const prompt = promptById.get(item.promptId);
           return {
@@ -913,6 +915,23 @@ export default function Home() {
     } finally {
       setGeneratingVideoSpeechGroup("");
     }
+  }
+
+  function updateVideoSpeechPreviewItem(promptId: string, speech: string) {
+    setVideoSpeechPreview((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.map((item) => (item.promptId === promptId ? { ...item, speech } : item))
+          }
+        : current
+    );
+  }
+
+  async function regenerateCurrentVideoSpeechPreview() {
+    if (!videoSpeechPreview) return;
+    const groupPrompts = prompts.filter((prompt) => videoSpeechPreview.promptIds.includes(prompt.id));
+    await generateVideoSpeechPreview(videoSpeechPreview.scriptGroup, groupPrompts);
   }
 
   async function applyVideoSpeechPreview() {
@@ -2066,11 +2085,14 @@ export default function Home() {
                 <article key={item.promptId}>
                   <span>{`Parte ${item.takeOrder} - ${item.role}`}</span>
                   <strong>{item.title}</strong>
-                  <p>{item.speech}</p>
+                  <textarea value={item.speech} onChange={(event) => updateVideoSpeechPreviewItem(item.promptId, event.target.value)} />
                 </article>
               ))}
             </div>
             <div className="speech-preview-actions">
+              <button className="secondary" disabled={Boolean(generatingVideoSpeechGroup)} onClick={regenerateCurrentVideoSpeechPreview}>
+                {generatingVideoSpeechGroup ? "Gerando..." : "Gerar outra versão"}
+              </button>
               <button className="secondary" onClick={() => setVideoSpeechPreview(null)}>
                 Cancelar
               </button>

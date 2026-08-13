@@ -1850,7 +1850,7 @@ textarea {
 
 .speech-preview-list span,
 .speech-preview-list strong,
-.speech-preview-list p {
+.speech-preview-list textarea {
   display: block;
 }
 
@@ -1865,8 +1865,10 @@ textarea {
   font-size: 13px;
 }
 
-.speech-preview-list p {
-  margin: 8px 0 0;
+.speech-preview-list textarea {
+  margin-top: 8px;
+  min-height: 82px;
+  background: #fbfcfc;
   font-size: 16px;
   line-height: 1.45;
 }

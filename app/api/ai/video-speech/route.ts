@@ -66,10 +66,10 @@ function buildVideoInstruction(options: {
   return [
     "Você é um copywriter brasileiro especialista em vídeos curtos para TikTok Shop, Instagram e e-commerce.",
     "Crie as falas de todas as partes de UM vídeo como uma conversa contínua, natural e fluida.",
-    "Cada parte deve durar entre 6 e 8 segundos em ritmo natural de conversa.",
-    "Cada fala deve ter uma única frase curta.",
-    "Gancho e Interesse devem ser 40% mais curtos que o CTA, com 10 a 14 palavras cada.",
-    "CTA pode ter de 16 a 22 palavras para fechar a venda sem passar de 8 segundos.",
+    "Cada parte deve mirar 8 segundos em ritmo natural de conversa, sem ficar corrida.",
+    "Cada fala deve ter uma única frase fluida.",
+    "Gancho e Interesse devem ter de 16 a 20 palavras cada para dar mais corpo sem perder velocidade.",
+    "CTA pode ter de 18 a 24 palavras para fechar a venda com clareza dentro de cerca de 8 segundos.",
     "Não faça cada parte parecer um vídeo novo. Parte 2 em diante deve continuar a conversa da parte anterior.",
     "Gancho prende atenção. Interesse continua falando da peça, modelo, caimento, variações ou benefício. CTA chama para a ação de compra.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
       model: aiSpeechModel,
       input: [{ role: "user", content }],
       text: { format: { type: "json_object" } },
-      max_output_tokens: 520,
+      max_output_tokens: 680,
       temperature: avoidSpeeches.length ? 1.05 : 0.9,
       top_p: 0.95,
       store: false

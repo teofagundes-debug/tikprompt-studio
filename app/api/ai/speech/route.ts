@@ -71,10 +71,10 @@ function buildSpeechInstruction(options: {
     "Se a função for Interesse, não faça abertura de vídeo nem novo gancho; continue a conversa falando das características da peça, modelo, caimento, variações ou benefício principal.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite frases de abertura como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
-    "A fala deve durar entre 6 e 8 segundos em ritmo natural de conversa.",
-    "Use uma única frase curta.",
-    "Se for Gancho ou Interesse, use de 10 a 14 palavras para ficar rápido e fluido.",
-    "Se for CTA, use de 16 a 22 palavras para fechar a venda sem passar de 8 segundos.",
+    "A fala deve mirar 8 segundos em ritmo natural de conversa, sem ficar corrida.",
+    "Use uma única frase fluida.",
+    "Se for Gancho ou Interesse, use de 16 a 20 palavras para dar mais corpo sem perder velocidade.",
+    "Se for CTA, use de 18 a 24 palavras para fechar a venda com clareza dentro de cerca de 8 segundos.",
     "Não junte várias ideias na mesma fala; escolha uma ideia forte e diga de forma fluida.",
     "Use uma linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop.",
     "Varie bastante o ângulo de venda e evite repetir estruturas comuns ou frases genéricas.",
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       model: aiSpeechModel,
       input: [{ role: "user", content }],
-      max_output_tokens: 160,
+      max_output_tokens: 190,
       store: false
     })
   });

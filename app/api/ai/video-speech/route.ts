@@ -74,6 +74,11 @@ function buildVideoInstruction(options: {
     "Gancho prende atenção. Interesse continua falando da peça, modelo, caimento, variações ou benefício. CTA chama para a ação de compra.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite aberturas como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
+    "Use a descrição do produto para entender benefícios reais, mas não copie a descrição como lista técnica.",
+    "Transforme características em benefícios percebidos pela cliente: tecido vira sensação no corpo, caimento vira efeito visual, praticidade vira segurança no uso.",
+    "As falas devem parecer uma vendedora experiente conversando na loja: humanas, profissionais, confiantes e comerciais sem parecer propaganda forçada.",
+    "Evite frases genéricas como perfeito para qualquer ocasião, eleve seu estilo a outro patamar, peça indispensável ou você vai amar.",
+    "Prefira detalhes concretos e naturais, conectando uma característica da peça a um motivo claro para comprar.",
     "Use linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop, sem cara de propaganda engessada.",
     options.avoidSpeeches.length
       ? "IMPORTANTE: gere uma versao realmente nova, com angulo, abertura e escolha de palavras diferentes das falas anteriores listadas abaixo. Nao copie nem parafraseie de forma muito parecida."

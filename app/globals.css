@@ -1159,6 +1159,12 @@ input:disabled {
   background: #fff;
 }
 
+.product-card-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+}
+
 .product-current strong {
   display: block;
   overflow: hidden;
@@ -1292,7 +1298,7 @@ input:disabled {
   background: var(--product-card-bg);
   color: var(--ink);
   min-width: 0;
-  min-height: 38px;
+  min-height: 58px;
   padding: 7px;
   display: flex;
   align-items: center;

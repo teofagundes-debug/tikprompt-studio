@@ -19,6 +19,7 @@ export async function POST(_request: Request, { params }: Params) {
       name: `${product.name} - copia`,
       description: product.description,
       imageUrl: product.imageUrl,
+      weeklyFocus: false,
       businessId: product.businessId,
       prompts: {
         create: product.prompts.map((prompt) => ({

@@ -52,6 +52,7 @@ model Product {
   name       String
   description String   @default("")
   imageUrl   String?
+  weeklyFocus Boolean  @default(false)
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   prompts    Prompt[]

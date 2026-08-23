@@ -16,7 +16,8 @@ export async function PATCH(request: Request, { params }: Params) {
     data: {
       ...(body.name !== undefined ? { name: String(body.name) } : {}),
       ...(body.description !== undefined ? { description: String(body.description ?? "") } : {}),
-      ...(body.imageUrl !== undefined ? { imageUrl: String(body.imageUrl || "") || null } : {})
+      ...(body.imageUrl !== undefined ? { imageUrl: String(body.imageUrl || "") || null } : {}),
+      ...(body.weeklyFocus !== undefined ? { weeklyFocus: Boolean(body.weeklyFocus) } : {})
     }
   });
 

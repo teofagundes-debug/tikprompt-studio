@@ -31,6 +31,7 @@ type Product = {
   name: string;
   description: string;
   imageUrl: string | null;
+  weeklyFocus: boolean;
   prompts: Prompt[];
 };
 
@@ -390,6 +391,7 @@ export default function Home() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [productPickerMode, setProductPickerMode] = useState<"all" | "week">("all");
   const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
@@ -502,8 +504,13 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase();
-    return business?.products.filter((item) => item.name.toLowerCase().includes(query)) ?? [];
-  }, [business, productSearch]);
+    return business?.products.filter((item) => {
+      const matchesMode = productPickerMode === "all" || item.weeklyFocus;
+      return matchesMode && item.name.toLowerCase().includes(query);
+    }) ?? [];
+  }, [business, productSearch, productPickerMode]);
+
+  const weeklyProductsCount = business?.products.filter((item) => item.weeklyFocus).length ?? 0;
 
   const prompts = useMemo(() => {
     return (
@@ -712,6 +719,25 @@ export default function Home() {
       body: JSON.stringify({ imageUrl })
     });
     showToast("Foto do produto salva");
+  }
+
+  async function toggleProductWeeklyFocus() {
+    if (!product) return;
+    const weeklyFocus = !product.weeklyFocus;
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business?.id
+          ? { ...biz, products: biz.products.map((item) => (item.id === product.id ? { ...item, weeklyFocus } : item)) }
+          : biz
+      )
+    );
+
+    await fetch(`/api/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weeklyFocus })
+    });
+    showToast(weeklyFocus ? "Produto adicionado à semana" : "Produto removido da semana");
   }
 
   function saveBusinessVideoTypes(types: string[]) {
@@ -1742,6 +1768,7 @@ export default function Home() {
                 <span>
                   <small>Produto selecionado</small>
                   <strong>{product?.name ?? "Nenhum produto"}</strong>
+                  {product?.weeklyFocus && <em>Produção da semana</em>}
                 </span>
                 <span className="product-current-arrow">v</span>
               </button>
@@ -1771,6 +1798,9 @@ export default function Home() {
               </span>
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
+              </button>
+              <button className={`secondary week-toggle ${product?.weeklyFocus ? "active" : ""}`} onClick={toggleProductWeeklyFocus} disabled={!product}>
+                {product?.weeklyFocus ? "Na semana" : "Semana"}
               </button>
               <label className={`secondary product-photo-button ${!product ? "disabled" : ""}`}>
                 Alterar foto
@@ -1813,6 +1843,14 @@ export default function Home() {
                 <div>
                   <h2>Produtos</h2>
                   <span>{filteredProducts.length} encontrados em {business.name}</span>
+                  <div className="product-picker-filters">
+                    <button className={productPickerMode === "all" ? "active" : ""} onClick={() => setProductPickerMode("all")}>
+                      Todos
+                    </button>
+                    <button className={productPickerMode === "week" ? "active" : ""} onClick={() => setProductPickerMode("week")}>
+                      Semana {weeklyProductsCount ? `(${weeklyProductsCount})` : ""}
+                    </button>
+                  </div>
                 </div>
                 <label className="product-picker-search">
                   Buscar produto
@@ -1823,7 +1861,7 @@ export default function Home() {
                 {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
                 {filteredProducts.map((item) => (
                   <button
-                    className={`product-card ${item.id === product?.id ? "active" : ""}`}
+                    className={`product-card ${item.id === product?.id ? "active" : ""} ${item.weeklyFocus ? "week-focus" : ""}`}
                     key={item.id}
                     onClick={() => {
                       setProductId(item.id);
@@ -1834,6 +1872,7 @@ export default function Home() {
                   >
                     {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
                     <strong>{item.name}</strong>
+                    {item.weeklyFocus && <span className="week-badge">Semana</span>}
                   </button>
                 ))}
               </div>

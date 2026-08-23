@@ -394,6 +394,7 @@ export default function Home() {
   const [productSearch, setProductSearch] = useState("");
   const [productPickerMode, setProductPickerMode] = useState<"all" | "week">("all");
   const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
+  const [copyStoreOpen, setCopyStoreOpen] = useState(false);
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
   const [generatingSpeech, setGeneratingSpeech] = useState(false);
@@ -659,24 +660,8 @@ export default function Home() {
     showToast("Produto duplicado");
   }
 
-  async function copyProductToBusiness() {
+  async function copyProductToBusiness(targetBusiness: Business) {
     if (!business || !product) return;
-    const options = businesses.filter((item) => item.id !== business.id);
-    if (!options.length) {
-      showToast("Crie outra loja para copiar este produto");
-      return;
-    }
-
-    const choice = window.prompt(
-      `Copiar produto para qual loja?\n\n${options.map((item, index) => `${index + 1}. ${item.name}`).join("\n")}\n\nDigite o número da loja:`
-    );
-    if (!choice) return;
-
-    const targetBusiness = options[Number(choice.trim()) - 1];
-    if (!targetBusiness) {
-      showToast("Loja não encontrada");
-      return;
-    }
 
     const response = await fetch("/api/products", {
       method: "POST",
@@ -697,8 +682,18 @@ export default function Home() {
     }
 
     await loadData();
+    setCopyStoreOpen(false);
     closeEditor();
     showToast(`Produto copiado para ${targetBusiness.name}`);
+  }
+
+  function openCopyStoreModal() {
+    if (!product) return;
+    if (businesses.filter((item) => item.id !== business?.id).length <= 0) {
+      showToast("Crie outra loja para copiar este produto");
+      return;
+    }
+    setCopyStoreOpen(true);
   }
 
   async function deleteProduct() {
@@ -1839,7 +1834,7 @@ export default function Home() {
                 </button>
                 <HelpDot text={"Duplicar produto:\nUse quando um produto novo vai reaproveitar a mesma estrutura de prompts.\nDepois de duplicar, altere nome, falas e prompts conforme o novo produto."} />
               </span>
-              <button className="secondary copy-store-button" onClick={copyProductToBusiness} disabled={!product || businesses.length <= 1}>
+              <button className="secondary copy-store-button" onClick={openCopyStoreModal} disabled={!product || businesses.length <= 1}>
                 Copiar loja
               </button>
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
@@ -2206,6 +2201,40 @@ export default function Home() {
               </button>
               <button className="primary" onClick={applyVideoSpeechPreview}>
                 Aplicar falas
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {copyStoreOpen && product && business && (
+        <section className="speech-preview-backdrop" role="dialog" aria-modal="true" aria-label="Copiar produto para outra loja">
+          <div className="speech-preview-modal copy-store-modal">
+            <div className="panel-head">
+              <div>
+                <h2>Copiar produto para loja</h2>
+                <span>{product.name} - escolha uma loja destino</span>
+              </div>
+              <button className="ghost" onClick={() => setCopyStoreOpen(false)}>
+                Fechar
+              </button>
+            </div>
+            <div className="copy-store-list">
+              {businesses
+                .filter((item) => item.id !== business.id)
+                .map((item) => (
+                  <button className="copy-store-option" key={item.id} onClick={() => copyProductToBusiness(item)}>
+                    <span className="copy-store-check">✓</span>
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>{item.niche}</small>
+                    </span>
+                  </button>
+                ))}
+            </div>
+            <div className="speech-preview-actions">
+              <button className="secondary" onClick={() => setCopyStoreOpen(false)}>
+                Cancelar
               </button>
             </div>
           </div>

@@ -2035,6 +2035,59 @@ textarea {
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
 }
 
+.copy-store-modal {
+  width: min(520px, 100%);
+}
+
+.copy-store-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.copy-store-option {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  min-height: 58px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.copy-store-option:hover {
+  border-color: rgba(11, 143, 131, 0.55);
+  background: var(--teal-2);
+}
+
+.copy-store-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #101312;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.copy-store-option strong,
+.copy-store-option small {
+  display: block;
+}
+
+.copy-store-option small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .speech-preview-list {
   display: grid;
   gap: 10px;

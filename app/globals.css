@@ -1237,6 +1237,13 @@ input:disabled {
   font-size: 12px;
 }
 
+.product-picker-hint {
+  margin: 5px 0 0;
+  color: #7a4a00;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .product-picker-filters {
   display: flex;
   gap: 6px;
@@ -1286,11 +1293,41 @@ input:disabled {
   color: var(--ink);
   min-width: 0;
   min-height: 38px;
-  padding: 7px 9px;
+  padding: 7px;
   display: flex;
   align-items: center;
   gap: 8px;
   text-align: left;
+}
+
+.product-card-select {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.product-card-week {
+  border: 1px solid #efc04d;
+  border-radius: 999px;
+  background: #fff8df;
+  color: #6a4300;
+  min-height: 28px;
+  padding: 0 9px;
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.product-card-week.active {
+  background: linear-gradient(135deg, #ffd45a, #fff0b5);
 }
 
 .product-card.week-focus {
@@ -1357,9 +1394,20 @@ input:disabled {
   cursor: pointer;
 }
 
+.week-toggle {
+  border-color: #f0bf3f;
+  background: #fff8df;
+  color: #6a4300;
+  box-shadow: 0 6px 14px rgba(239, 192, 77, 0.16);
+}
+
+.week-toggle:hover {
+  background: #ffeaa3;
+}
+
 .week-toggle.active {
   border-color: #efc04d;
-  background: #fff4cb;
+  background: linear-gradient(135deg, #ffd45a, #fff0b5);
   color: #6a4300;
 }
 

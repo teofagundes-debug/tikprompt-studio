@@ -32,6 +32,7 @@ type Product = {
   description: string;
   imageUrl: string | null;
   weeklyFocus: boolean;
+  businessId: string;
   prompts: Prompt[];
 };
 
@@ -721,18 +722,18 @@ export default function Home() {
     showToast("Foto do produto salva");
   }
 
-  async function toggleProductWeeklyFocus() {
-    if (!product) return;
-    const weeklyFocus = !product.weeklyFocus;
+  async function toggleProductWeeklyFocus(targetProduct = product) {
+    if (!targetProduct) return;
+    const weeklyFocus = !targetProduct.weeklyFocus;
     setBusinesses((current) =>
       current.map((biz) =>
-        biz.id === business?.id
-          ? { ...biz, products: biz.products.map((item) => (item.id === product.id ? { ...item, weeklyFocus } : item)) }
+        biz.id === targetProduct.businessId
+          ? { ...biz, products: biz.products.map((item) => (item.id === targetProduct.id ? { ...item, weeklyFocus } : item)) }
           : biz
       )
     );
 
-    await fetch(`/api/products/${product.id}`, {
+    await fetch(`/api/products/${targetProduct.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ weeklyFocus })
@@ -1799,8 +1800,8 @@ export default function Home() {
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
               </button>
-              <button className={`secondary week-toggle ${product?.weeklyFocus ? "active" : ""}`} onClick={toggleProductWeeklyFocus} disabled={!product}>
-                {product?.weeklyFocus ? "Na semana" : "Semana"}
+              <button className={`secondary week-toggle ${product?.weeklyFocus ? "active" : ""}`} onClick={() => toggleProductWeeklyFocus()} disabled={!product}>
+                {product?.weeklyFocus ? "Na semana" : "Favoritar semana"}
               </button>
               <label className={`secondary product-photo-button ${!product ? "disabled" : ""}`}>
                 Alterar foto
@@ -1843,6 +1844,7 @@ export default function Home() {
                 <div>
                   <h2>Produtos</h2>
                   <span>{filteredProducts.length} encontrados em {business.name}</span>
+                  <p className="product-picker-hint">Clique em Favoritar semana no produto selecionado para montar sua fila da semana.</p>
                   <div className="product-picker-filters">
                     <button className={productPickerMode === "all" ? "active" : ""} onClick={() => setProductPickerMode("all")}>
                       Todos
@@ -1860,20 +1862,26 @@ export default function Home() {
               <div className="product-card-grid">
                 {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
                 {filteredProducts.map((item) => (
-                  <button
+                  <article
                     className={`product-card ${item.id === product?.id ? "active" : ""} ${item.weeklyFocus ? "week-focus" : ""}`}
                     key={item.id}
-                    onClick={() => {
-                      setProductId(item.id);
-                      setProductPickerOpen(false);
-                      setProductSearch("");
-                      closeEditor();
-                    }}
                   >
-                    {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
-                    <strong>{item.name}</strong>
-                    {item.weeklyFocus && <span className="week-badge">Semana</span>}
-                  </button>
+                    <button
+                      className="product-card-select"
+                      onClick={() => {
+                        setProductId(item.id);
+                        setProductPickerOpen(false);
+                        setProductSearch("");
+                        closeEditor();
+                      }}
+                    >
+                      {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
+                      <strong>{item.name}</strong>
+                    </button>
+                    <button className={`product-card-week ${item.weeklyFocus ? "active" : ""}`} onClick={() => toggleProductWeeklyFocus(item)}>
+                      {item.weeklyFocus ? "Na semana" : "Favoritar"}
+                    </button>
+                  </article>
                 ))}
               </div>
             </section>

@@ -1282,7 +1282,8 @@ input:disabled {
 }
 
 .product-card-grid {
-  max-height: 240px;
+  max-height: calc(100vh - 305px);
+  min-height: min(420px, calc(100vh - 305px));
   overflow: auto;
   padding: 8px 10px;
   display: grid;

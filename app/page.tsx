@@ -659,6 +659,48 @@ export default function Home() {
     showToast("Produto duplicado");
   }
 
+  async function copyProductToBusiness() {
+    if (!business || !product) return;
+    const options = businesses.filter((item) => item.id !== business.id);
+    if (!options.length) {
+      showToast("Crie outra loja para copiar este produto");
+      return;
+    }
+
+    const choice = window.prompt(
+      `Copiar produto para qual loja?\n\n${options.map((item, index) => `${index + 1}. ${item.name}`).join("\n")}\n\nDigite o número da loja:`
+    );
+    if (!choice) return;
+
+    const targetBusiness = options[Number(choice.trim()) - 1];
+    if (!targetBusiness) {
+      showToast("Loja não encontrada");
+      return;
+    }
+
+    const response = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessId: targetBusiness.id,
+        name: product.name,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        weeklyFocus: product.weeklyFocus
+      })
+    });
+    const data = await readJson(response);
+
+    if (!response.ok) {
+      showToast(data.error ?? "Não foi possível copiar o produto");
+      return;
+    }
+
+    await loadData();
+    closeEditor();
+    showToast(`Produto copiado para ${targetBusiness.name}`);
+  }
+
   async function deleteProduct() {
     if (!product) return;
     if (!window.confirm(`Excluir o produto "${product.name}" e todos os prompts dele?`)) return;
@@ -1797,6 +1839,9 @@ export default function Home() {
                 </button>
                 <HelpDot text={"Duplicar produto:\nUse quando um produto novo vai reaproveitar a mesma estrutura de prompts.\nDepois de duplicar, altere nome, falas e prompts conforme o novo produto."} />
               </span>
+              <button className="secondary copy-store-button" onClick={copyProductToBusiness} disabled={!product || businesses.length <= 1}>
+                Copiar loja
+              </button>
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
               </button>

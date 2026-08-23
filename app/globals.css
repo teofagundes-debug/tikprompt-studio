@@ -1394,6 +1394,12 @@ input:disabled {
   cursor: pointer;
 }
 
+.copy-store-button {
+  border-color: rgba(11, 143, 131, 0.32);
+  background: #f3fffd;
+  color: #075f57;
+}
+
 .week-toggle {
   border-color: #f0bf3f;
   background: #fff8df;

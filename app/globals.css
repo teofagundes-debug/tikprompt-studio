@@ -2054,6 +2054,7 @@ textarea {
   padding: 10px 12px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   text-align: left;
 }
@@ -2061,20 +2062,6 @@ textarea {
 .copy-store-option:hover {
   border-color: rgba(11, 143, 131, 0.55);
   background: var(--teal-2);
-}
-
-.copy-store-check {
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: #101312;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  font-size: 14px;
-  font-weight: 950;
 }
 
 .copy-store-option strong,
@@ -2086,6 +2073,16 @@ textarea {
   margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.copy-store-action {
+  border-radius: 999px;
+  background: #101312;
+  color: #fff;
+  padding: 7px 10px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .speech-preview-list {

@@ -2224,11 +2224,11 @@ export default function Home() {
                 .filter((item) => item.id !== business.id)
                 .map((item) => (
                   <button className="copy-store-option" key={item.id} onClick={() => copyProductToBusiness(item)}>
-                    <span className="copy-store-check">✓</span>
                     <span>
                       <strong>{item.name}</strong>
                       <small>{item.niche}</small>
                     </span>
+                    <span className="copy-store-action">Copiar para esta loja</span>
                   </button>
                 ))}
             </div>

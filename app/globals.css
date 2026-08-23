@@ -1288,6 +1288,9 @@ input:disabled {
   padding: 8px 10px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-auto-rows: min-content;
+  align-content: start;
+  align-items: start;
   gap: 6px;
 }
 

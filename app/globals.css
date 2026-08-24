@@ -1131,7 +1131,7 @@ input:disabled {
   width: fit-content;
   border-radius: 999px;
   background: #101312;
-  color: #fff;
+  color: #ff3b30;
   padding: 5px 10px;
   font-size: 14px;
   font-weight: 950;
@@ -1139,13 +1139,13 @@ input:disabled {
 }
 
 .product-current {
-  min-height: 70px;
+  min-height: 88px;
   width: 100%;
   border: 2px solid rgba(11, 143, 131, 0.72);
   border-radius: var(--radius);
   background: linear-gradient(135deg, #d8fbf6, #fff6d7);
   color: var(--ink);
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1172,9 +1172,9 @@ input:disabled {
 }
 
 .product-thumb {
-  width: 54px;
-  height: 54px;
-  border-radius: 10px;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
   border-color: rgba(11, 143, 131, 0.34);
 }
 

@@ -1130,22 +1130,22 @@ input:disabled {
 .product-chooser-label {
   width: fit-content;
   border-radius: 999px;
-  background: #101312;
-  color: #ff3b30;
-  padding: 5px 10px;
-  font-size: 14px;
+  background: #ffe5e2;
+  color: #d21d12;
+  padding: 6px 12px;
+  font-size: 16px;
   font-weight: 950;
-  box-shadow: 0 8px 18px rgba(15, 21, 18, 0.12);
+  box-shadow: 0 8px 18px rgba(210, 29, 18, 0.12);
 }
 
 .product-current {
-  min-height: 88px;
+  min-height: 112px;
   width: 100%;
   border: 2px solid rgba(11, 143, 131, 0.72);
   border-radius: var(--radius);
   background: linear-gradient(135deg, #d8fbf6, #fff6d7);
   color: var(--ink);
-  padding: 12px 14px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1171,9 +1171,9 @@ input:disabled {
   border-radius: 8px;
 }
 
-.product-thumb {
-  width: 72px;
-  height: 72px;
+.product-current .product-thumb {
+  width: 96px;
+  height: 96px;
   border-radius: 12px;
   border-color: rgba(11, 143, 131, 0.34);
 }

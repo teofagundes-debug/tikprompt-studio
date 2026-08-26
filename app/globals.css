@@ -1055,8 +1055,8 @@ input:disabled {
 }
 
 .product-description-box textarea {
-  min-height: 74px;
-  max-height: 126px;
+  min-height: 142px;
+  max-height: 260px;
   background: rgba(255, 255, 255, 0.92);
   font-size: 13px;
   padding: 10px;

@@ -15,6 +15,31 @@ type SpeechItem = {
   speech: string;
 };
 
+const videoSpeechResponseFormat = {
+  type: "json_schema",
+  name: "video_speech_response",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            promptId: { type: "string" },
+            speech: { type: "string" }
+          },
+          required: ["promptId", "speech"]
+        }
+      }
+    },
+    required: ["items"]
+  }
+};
+
 function outputText(data: unknown) {
   const response = data as {
     output_text?: string;
@@ -203,8 +228,8 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       model: aiSpeechModel,
       input: [{ role: "user", content }],
-      text: { format: { type: "json_object" } },
-      max_output_tokens: 680,
+      text: { format: videoSpeechResponseFormat },
+      max_output_tokens: 1200,
       temperature: avoidSpeeches.length ? 1.05 : 0.9,
       top_p: 0.95,
       store: false

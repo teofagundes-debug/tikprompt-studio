@@ -1600,7 +1600,7 @@ export default function Home() {
                   <div className="panel-head">
                     <div>
                       <h2>Uso de IA</h2>
-                      <span>Estimativa interna do modelo {aiUsage?.model ?? "gpt-4o-mini"}</span>
+                      <span>Estimativa interna do modelo {aiUsage?.model ?? "gpt-4o"}</span>
                     </div>
                   </div>
                   <div className="ai-usage-grid">

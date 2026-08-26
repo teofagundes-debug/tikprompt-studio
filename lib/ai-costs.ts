@@ -1,4 +1,4 @@
-export const aiSpeechModel = "gpt-4o-mini";
+export const aiSpeechModel = "gpt-4o";
 
 const modelPrices: Record<string, { input: number; output: number }> = {
   "gpt-5-nano": {
@@ -8,6 +8,10 @@ const modelPrices: Record<string, { input: number; output: number }> = {
   "gpt-4o-mini": {
     input: 0.15,
     output: 0.6
+  },
+  "gpt-4o": {
+    input: 2.5,
+    output: 10
   }
 };
 

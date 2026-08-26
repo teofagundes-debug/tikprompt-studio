@@ -22,13 +22,30 @@ function outputText(data: unknown) {
   };
   if (response.output_text) return response.output_text.trim();
 
-  return (
+  const directText =
     response.output
       ?.flatMap((item) => item.content ?? [])
       .map((content) => content.text ?? content.refusal ?? "")
       .join("\n")
-      .trim() ?? ""
-  );
+      .trim() ?? "";
+
+  if (directText) return directText;
+
+  const found: string[] = [];
+  const visit = (value: unknown) => {
+    if (!value || found.length) return;
+    if (typeof value !== "object") return;
+    for (const [key, entry] of Object.entries(value)) {
+      if ((key === "text" || key === "output_text") && typeof entry === "string" && entry.trim()) {
+        found.push(entry.trim());
+        return;
+      }
+      if (typeof entry === "object") visit(entry);
+    }
+  };
+  visit(data);
+
+  return found[0] ?? "";
 }
 
 function cleanSpeech(text: string) {
@@ -89,6 +106,7 @@ function buildVideoInstruction(options: {
       : "Crie uma versao com angulo de venda claro e natural.",
     "Não invente dados objetivos específicos como tecido, composição, tamanho, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
     "Responda somente JSON válido neste formato: {\"items\":[{\"promptId\":\"id\",\"speech\":\"fala\"}]}",
+    "Não inclua markdown, bloco de código, comentários, título, explicação ou texto fora do JSON.",
     "",
     `Negócio: ${options.businessName}`,
     `Produto: ${options.productName}`,
@@ -112,7 +130,8 @@ function parseItems(text: string): SpeechItem[] {
     .replace(/^```(?:json)?/i, "")
     .replace(/```$/i, "")
     .trim();
-  const parsed = JSON.parse(cleaned) as { items?: SpeechItem[] };
+  const jsonText = cleaned.startsWith("{") ? cleaned : cleaned.match(/\{[\s\S]*\}/)?.[0] ?? cleaned;
+  const parsed = JSON.parse(jsonText) as { items?: SpeechItem[] };
   return Array.isArray(parsed.items)
     ? parsed.items
         .map((item) => ({ promptId: String(item.promptId ?? ""), speech: cleanSpeech(String(item.speech ?? "")) }))

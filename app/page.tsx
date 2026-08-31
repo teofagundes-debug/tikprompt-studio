@@ -1884,7 +1884,7 @@ export default function Home() {
                 <div>
                   <h2>Produtos</h2>
                   <span>{filteredProducts.length} encontrados em {business.name}</span>
-                  <p className="product-picker-hint">Clique em Favoritar semana no produto selecionado para montar sua fila da semana.</p>
+                  <p className="product-picker-hint">Selecione o produto e use o botão Favoritar semana no menu principal para montar sua fila.</p>
                   <div className="product-picker-filters">
                     <button className={productPickerMode === "all" ? "active" : ""} onClick={() => setProductPickerMode("all")}>
                       Todos
@@ -1918,9 +1918,7 @@ export default function Home() {
                       {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
                       <strong>{item.name}</strong>
                     </button>
-                    <button className={`product-card-week ${item.weeklyFocus ? "active" : ""}`} onClick={() => toggleProductWeeklyFocus(item)}>
-                      {item.weeklyFocus ? "Na semana" : "Favoritar"}
-                    </button>
+                    {item.weeklyFocus && <span className="product-card-week active">Na semana</span>}
                   </article>
                 ))}
               </div>

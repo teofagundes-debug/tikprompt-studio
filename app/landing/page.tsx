@@ -46,57 +46,22 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="hero-scene" aria-hidden="true">
-          <div className="scene-sidebar">
-            <span />
-            <strong>Loja da Danii</strong>
-            <small>Vestido Midi etc...</small>
-          </div>
-          <div className="scene-board">
-            <div className="scene-tabs">
-              <span>Imagem</span>
-              <strong>Vídeo</strong>
-              <span>Copy-postagens</span>
-            </div>
-            <div className="scene-columns">
-              <div className="scene-column">
-                <strong>Vídeo 1</strong>
-                <button className="scene-ai-button">Gerar falas IA</button>
-                <div className="scene-card">
-                  <span />
-                  <b>Parte 1</b>
-                  <small>SPEECH editável</small>
-                </div>
-                <div className="scene-card compact">
-                  <span />
-                  <b>Parte 2</b>
-                </div>
-              </div>
-              <div className="scene-column warm">
-                <strong>UGC curto</strong>
-                <div className="scene-card">
-                  <span />
-                  <b>Copy 1</b>
-                  <small>Copiar em 1 clique</small>
-                </div>
-              </div>
-              <div className="scene-prompt">
-                <small>SPEECH (Portuguese BR)</small>
-                <p>Essa peça tem aquele caimento leve que veste bem sem complicar o look...</p>
-              </div>
+        <div className="landing-hero-content">
+          <div className="landing-hero-copy">
+            <span className="landing-kicker">Biblioteca de prompts com geração de falas por IA</span>
+            <h1>TikPrompt Studio</h1>
+            <p>
+              Organize prompts de imagem, roteiros de vídeo e copies por negócio e produto. Gere falas de vídeo com IA, revise antes de aplicar e produza conteúdo de vendas com mais velocidade.
+            </p>
+            <div className="landing-cta-row">
+              <a className="landing-primary" href="#pacotes">Quero organizar meus prompts</a>
+              <Link className="landing-secondary" href="/">Já tenho acesso</Link>
             </div>
           </div>
-        </div>
 
-        <div className="landing-hero-copy">
-          <span className="landing-kicker">Biblioteca de prompts com geração de falas por IA</span>
-          <h1>TikPrompt Studio</h1>
-          <p>
-            Organize prompts de imagem, roteiros de vídeo e copies por negócio e produto. Gere falas de vídeo com IA, revise antes de aplicar e produza conteúdo de vendas com mais velocidade.
-          </p>
-          <div className="landing-cta-row">
-            <a className="landing-primary" href="#pacotes">Quero organizar meus prompts</a>
-            <Link className="landing-secondary" href="/">Já tenho acesso</Link>
+          <div className="landing-demo-video">
+            <span>Demonstração rápida</span>
+            <video src="/tikprompt-studio-demo.mp4" autoPlay muted loop playsInline controls preload="metadata" />
           </div>
         </div>
       </section>

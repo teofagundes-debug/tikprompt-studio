@@ -32,6 +32,7 @@ type Product = {
   description: string;
   imageUrl: string | null;
   weeklyFocus: boolean;
+  favoriteGroup: string | null;
   businessId: string;
   prompts: Prompt[];
 };
@@ -42,6 +43,7 @@ type Business = {
   niche: string;
   initials: string;
   color: string;
+  favoriteGroups: string[];
   products: Product[];
 };
 
@@ -117,6 +119,7 @@ type VideoSpeechPreview = {
 
 const categories = ["Imagem", "Video", "Copy"];
 const defaultVideoTypes = ["1-POV", "2-UGC"];
+const defaultFavoriteGroups = ["Semana"];
 const speechRoleOptions = ["Gancho", "Interesse", "CTA"];
 const approximateUsdBrlRate = 5.5;
 const speechHeaderPattern = /SPEECH\s*\(\s*Portuguese\s*BR\s*\)\s*:?/i;
@@ -125,6 +128,20 @@ const customVideoTypesKey = "tikprompt-video-types";
 
 function sameText(left: string, right: string) {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
+function normalizeFavoriteGroups(groups?: string[] | null) {
+  const normalized = [...new Set((groups?.length ? groups : defaultFavoriteGroups).map((item) => item.trim()).filter(Boolean))];
+  return normalized.length ? normalized : defaultFavoriteGroups;
+}
+
+function productFavoriteGroup(product?: Pick<Product, "favoriteGroup" | "weeklyFocus"> | null) {
+  if (!product) return "";
+  return product.favoriteGroup || (product.weeklyFocus ? "Semana" : "");
+}
+
+function productIsInFavoriteGroup(product: Pick<Product, "favoriteGroup" | "weeklyFocus">, group: string) {
+  return sameText(productFavoriteGroup(product), group);
 }
 
 function categoryLabel(value: string) {
@@ -392,7 +409,8 @@ export default function Home() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
-  const [productPickerMode, setProductPickerMode] = useState<"all" | "week">("all");
+  const [productPickerMode, setProductPickerMode] = useState("all");
+  const [favoriteGroupName, setFavoriteGroupName] = useState(defaultFavoriteGroups[0]);
   const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
   const [copyStoreOpen, setCopyStoreOpen] = useState(false);
   const [copiedPromptId, setCopiedPromptId] = useState("");
@@ -477,6 +495,8 @@ export default function Home() {
 
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
   const product = business?.products.find((item) => item.id === productId) ?? business?.products[0];
+  const favoriteGroups = useMemo(() => normalizeFavoriteGroups(business?.favoriteGroups), [business?.favoriteGroups]);
+  const selectedFavoriteGroup = favoriteGroups.find((item) => sameText(item, favoriteGroupName)) ?? favoriteGroups[0] ?? defaultFavoriteGroups[0];
   const totalProducts = businesses.reduce((sum, item) => sum + item.products.length, 0);
   const totalPrompts = businesses.reduce((sum, item) => sum + item.products.reduce((productSum, current) => productSum + current.prompts.length, 0), 0);
   const totalVideos = businesses.reduce(
@@ -507,12 +527,12 @@ export default function Home() {
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase();
     return business?.products.filter((item) => {
-      const matchesMode = productPickerMode === "all" || item.weeklyFocus;
+      const matchesMode = productPickerMode === "all" || productIsInFavoriteGroup(item, productPickerMode);
       return matchesMode && item.name.toLowerCase().includes(query);
     }) ?? [];
   }, [business, productSearch, productPickerMode]);
 
-  const weeklyProductsCount = business?.products.filter((item) => item.weeklyFocus).length ?? 0;
+  const favoriteGroupCount = (group: string) => business?.products.filter((item) => productIsInFavoriteGroup(item, group)).length ?? 0;
 
   const prompts = useMemo(() => {
     return (
@@ -547,6 +567,15 @@ export default function Home() {
       setProductId(business.products[0]?.id ?? "");
     }
   }, [business, businessId, businesses, product, productId]);
+
+  useEffect(() => {
+    if (!favoriteGroups.some((item) => sameText(item, favoriteGroupName))) {
+      setFavoriteGroupName(favoriteGroups[0]);
+    }
+    if (productPickerMode !== "all" && !favoriteGroups.some((item) => sameText(item, productPickerMode))) {
+      setProductPickerMode("all");
+    }
+  }, [favoriteGroupName, favoriteGroups, productPickerMode]);
 
   useEffect(() => {
     if (category === "Video" && videoTypeOptions.length && !videoTypeOptions.includes(videoTakeType)) {
@@ -671,7 +700,8 @@ export default function Home() {
         name: product.name,
         description: product.description,
         imageUrl: product.imageUrl,
-        weeklyFocus: product.weeklyFocus
+        weeklyFocus: product.weeklyFocus,
+        favoriteGroup: productFavoriteGroup(product)
       })
     });
     const data = await readJson(response);
@@ -759,13 +789,130 @@ export default function Home() {
     showToast("Foto do produto salva");
   }
 
-  async function toggleProductWeeklyFocus(targetProduct = product) {
+  async function saveFavoriteGroups(groups: string[]) {
+    if (!business) return;
+    const favoriteGroups = normalizeFavoriteGroups(groups);
+    setBusinesses((current) =>
+      current.map((biz) => (biz.id === business.id ? { ...biz, favoriteGroups } : biz))
+    );
+    await fetch(`/api/businesses/${business.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favoriteGroups })
+    });
+  }
+
+  async function createFavoriteGroup() {
+    if (!business) return;
+    const name = window.prompt("Nome do grupo de favoritos", "Mês")?.trim();
+    if (!name) return;
+    if (favoriteGroups.some((item) => sameText(item, name))) {
+      setFavoriteGroupName(favoriteGroups.find((item) => sameText(item, name)) ?? name);
+      setProductPickerMode(name);
+      return;
+    }
+
+    await saveFavoriteGroups([...favoriteGroups, name]);
+    setFavoriteGroupName(name);
+    setProductPickerMode(name);
+    showToast("Grupo criado");
+  }
+
+  async function editFavoriteGroup() {
+    if (!business || !selectedFavoriteGroup) return;
+    const name = window.prompt("Editar grupo de favoritos", selectedFavoriteGroup)?.trim();
+    if (!name || sameText(name, selectedFavoriteGroup)) return;
+    if (favoriteGroups.some((item) => sameText(item, name) && !sameText(item, selectedFavoriteGroup))) {
+      showToast("Este grupo já existe");
+      return;
+    }
+
+    const nextGroups = favoriteGroups.map((item) => (sameText(item, selectedFavoriteGroup) ? name : item));
+    await saveFavoriteGroups(nextGroups);
+
+    const productsToUpdate = business.products.filter((item) => productIsInFavoriteGroup(item, selectedFavoriteGroup));
+    await Promise.all(
+      productsToUpdate.map((item) =>
+        fetch(`/api/products/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ favoriteGroup: name, weeklyFocus: sameText(name, "Semana") })
+        })
+      )
+    );
+
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business.id
+          ? {
+              ...biz,
+              products: biz.products.map((item) =>
+                productIsInFavoriteGroup(item, selectedFavoriteGroup)
+                  ? { ...item, favoriteGroup: name, weeklyFocus: sameText(name, "Semana") }
+                  : item
+              )
+            }
+          : biz
+      )
+    );
+    setFavoriteGroupName(name);
+    setProductPickerMode(name);
+    showToast("Grupo atualizado");
+  }
+
+  async function deleteFavoriteGroup() {
+    if (!business || !selectedFavoriteGroup) return;
+    if (favoriteGroups.length <= 1) {
+      showToast("Mantenha pelo menos um grupo");
+      return;
+    }
+    if (!window.confirm(`Excluir o grupo "${selectedFavoriteGroup}"? Os produtos dele voltam para Todos.`)) return;
+
+    const nextGroups = favoriteGroups.filter((item) => !sameText(item, selectedFavoriteGroup));
+    await saveFavoriteGroups(nextGroups);
+
+    const productsToUpdate = business.products.filter((item) => productIsInFavoriteGroup(item, selectedFavoriteGroup));
+    await Promise.all(
+      productsToUpdate.map((item) =>
+        fetch(`/api/products/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ favoriteGroup: "", weeklyFocus: false })
+        })
+      )
+    );
+
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business.id
+          ? {
+              ...biz,
+              products: biz.products.map((item) =>
+                productIsInFavoriteGroup(item, selectedFavoriteGroup) ? { ...item, favoriteGroup: null, weeklyFocus: false } : item
+              )
+            }
+          : biz
+      )
+    );
+    setFavoriteGroupName(nextGroups[0]);
+    setProductPickerMode("all");
+    showToast("Grupo excluído");
+  }
+
+  async function toggleProductFavoriteGroup(targetProduct = product) {
     if (!targetProduct) return;
-    const weeklyFocus = !targetProduct.weeklyFocus;
+    const isActive = productIsInFavoriteGroup(targetProduct, selectedFavoriteGroup);
+    const favoriteGroup = isActive ? "" : selectedFavoriteGroup;
+    const weeklyFocus = sameText(favoriteGroup, "Semana");
     setBusinesses((current) =>
       current.map((biz) =>
         biz.id === targetProduct.businessId
-          ? { ...biz, products: biz.products.map((item) => (item.id === targetProduct.id ? { ...item, weeklyFocus } : item)) }
+          ? {
+              ...biz,
+              products: biz.products.map((item) =>
+                item.id === targetProduct.id ? { ...item, favoriteGroup: favoriteGroup || null, weeklyFocus } : item
+              )
+            }
           : biz
       )
     );
@@ -773,9 +920,9 @@ export default function Home() {
     await fetch(`/api/products/${targetProduct.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weeklyFocus })
+      body: JSON.stringify({ favoriteGroup, weeklyFocus })
     });
-    showToast(weeklyFocus ? "Produto adicionado à semana" : "Produto removido da semana");
+    showToast(favoriteGroup ? `Produto adicionado em ${favoriteGroup}` : "Produto removido dos favoritos");
   }
 
   function saveBusinessVideoTypes(types: string[]) {
@@ -1806,7 +1953,7 @@ export default function Home() {
                 <span>
                   <small>Produto selecionado</small>
                   <strong>{product?.name ?? "Nenhum produto"}</strong>
-                  {product?.weeklyFocus && <em>Produção da semana</em>}
+                  {productFavoriteGroup(product) && <em>Grupo: {productFavoriteGroup(product)}</em>}
                 </span>
                 <span className="product-current-arrow">v</span>
               </button>
@@ -1840,8 +1987,12 @@ export default function Home() {
               <button className="secondary danger" onClick={deleteProduct} disabled={!product}>
                 Excluir
               </button>
-              <button className={`secondary week-toggle ${product?.weeklyFocus ? "active" : ""}`} onClick={() => toggleProductWeeklyFocus()} disabled={!product}>
-                {product?.weeklyFocus ? "Na semana" : "Favoritar semana"}
+              <button
+                className={`secondary week-toggle ${product && productIsInFavoriteGroup(product, selectedFavoriteGroup) ? "active" : ""}`}
+                onClick={() => toggleProductFavoriteGroup()}
+                disabled={!product}
+              >
+                {product && productIsInFavoriteGroup(product, selectedFavoriteGroup) ? `No ${selectedFavoriteGroup}` : `Favoritar ${selectedFavoriteGroup}`}
               </button>
               <label className={`secondary product-photo-button ${!product ? "disabled" : ""}`}>
                 Alterar foto
@@ -1884,14 +2035,29 @@ export default function Home() {
                 <div>
                   <h2>Produtos</h2>
                   <span>{filteredProducts.length} encontrados em {business.name}</span>
-                  <p className="product-picker-hint">Selecione o produto e use o botão Favoritar semana no menu principal para montar sua fila.</p>
+                  <p className="product-picker-hint">Crie grupos como Semana, Mês ou Campanha. Selecione o produto e use o botão Favoritar no menu principal.</p>
                   <div className="product-picker-filters">
                     <button className={productPickerMode === "all" ? "active" : ""} onClick={() => setProductPickerMode("all")}>
                       Todos
                     </button>
-                    <button className={productPickerMode === "week" ? "active" : ""} onClick={() => setProductPickerMode("week")}>
-                      Semana {weeklyProductsCount ? `(${weeklyProductsCount})` : ""}
-                    </button>
+                    {favoriteGroups.map((group) => {
+                      const count = favoriteGroupCount(group);
+                      return (
+                        <button
+                          className={sameText(productPickerMode, group) ? "active" : ""}
+                          key={group}
+                          onClick={() => {
+                            setProductPickerMode(group);
+                            setFavoriteGroupName(group);
+                          }}
+                        >
+                          {group} {count ? `(${count})` : ""}
+                        </button>
+                      );
+                    })}
+                    <button onClick={createFavoriteGroup}>+</button>
+                    <button onClick={editFavoriteGroup}>Editar grupo</button>
+                    <button onClick={deleteFavoriteGroup}>Excluir grupo</button>
                   </div>
                 </div>
                 <label className="product-picker-search">
@@ -1903,7 +2069,7 @@ export default function Home() {
                 {!filteredProducts.length && <p className="empty-state">Nenhum produto encontrado.</p>}
                 {filteredProducts.map((item) => (
                   <article
-                    className={`product-card ${item.id === product?.id ? "active" : ""} ${item.weeklyFocus ? "week-focus" : ""}`}
+                    className={`product-card ${item.id === product?.id ? "active" : ""} ${productFavoriteGroup(item) ? "week-focus" : ""}`}
                     key={item.id}
                   >
                     <button
@@ -1918,7 +2084,7 @@ export default function Home() {
                       {item.imageUrl && <img className="product-card-thumb" src={item.imageUrl} alt="" />}
                       <strong>{item.name}</strong>
                     </button>
-                    {item.weeklyFocus && <span className="product-card-week active">Na semana</span>}
+                    {productFavoriteGroup(item) && <span className="product-card-week active">{productFavoriteGroup(item)}</span>}
                   </article>
                 ))}
               </div>

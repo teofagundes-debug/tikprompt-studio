@@ -12,6 +12,10 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json();
   const name = String(body.name ?? "").trim();
   const niche = String(body.niche ?? "").trim();
+  const favoriteGroupNames = Array.isArray(body.favoriteGroups)
+    ? body.favoriteGroups.map((item: unknown) => String(item).trim()).filter((item: string) => item.length > 0)
+    : null;
+  const favoriteGroups: string[] | null = favoriteGroupNames ? Array.from(new Set<string>(favoriteGroupNames)) : null;
   const initials = name
     .split(" ")
     .map((part) => part[0])
@@ -25,7 +29,8 @@ export async function PATCH(request: Request, { params }: Params) {
     data: {
       ...(name ? { name } : {}),
       ...(niche ? { niche } : {}),
-      ...(initials ? { initials } : {})
+      ...(initials ? { initials } : {}),
+      ...(favoriteGroups ? { favoriteGroups } : {})
     }
   });
 

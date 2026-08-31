@@ -13,6 +13,7 @@ model Business {
   niche     String
   initials  String
   color     String
+  favoriteGroups String[]  @default(["Semana"])
   userId    String?
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   products  Product[]
@@ -53,6 +54,7 @@ model Product {
   description String   @default("")
   imageUrl   String?
   weeklyFocus Boolean  @default(false)
+  favoriteGroup String?
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   prompts    Prompt[]

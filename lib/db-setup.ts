@@ -13,6 +13,7 @@ export async function ensureDatabaseSchema() {
       "niche" TEXT NOT NULL,
       "initials" TEXT NOT NULL,
       "color" TEXT NOT NULL,
+      "favoriteGroups" TEXT[] NOT NULL DEFAULT ARRAY['Semana']::TEXT[],
       "userId" TEXT,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -49,6 +50,7 @@ export async function ensureDatabaseSchema() {
       "description" TEXT NOT NULL DEFAULT '',
       "imageUrl" TEXT,
       "weeklyFocus" BOOLEAN NOT NULL DEFAULT false,
+      "favoriteGroup" TEXT,
       "businessId" TEXT NOT NULL,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -103,6 +105,8 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL DEFAULT '';`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "weeklyFocus" BOOLEAN NOT NULL DEFAULT false;`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "favoriteGroup" TEXT;`);
+  await prisma.$executeRawUnsafe(`UPDATE "Product" SET "favoriteGroup" = 'Semana' WHERE "weeklyFocus" = true AND ("favoriteGroup" IS NULL OR "favoriteGroup" = '');`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_businessId_idx" ON "Prompt"("businessId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_productId_idx" ON "Prompt"("productId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_category_idx" ON "Prompt"("category");`);
@@ -111,6 +115,7 @@ export async function ensureDatabaseSchema() {
   await prisma.$executeRawUnsafe(`ALTER TABLE "Prompt" ADD COLUMN IF NOT EXISTS "takeOrder" INTEGER;`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Prompt_scriptGroup_idx" ON "Prompt"("scriptGroup");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "favoriteGroups" TEXT[] NOT NULL DEFAULT ARRAY['Semana']::TEXT[];`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "activatedAt" TIMESTAMP(3);`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);`);

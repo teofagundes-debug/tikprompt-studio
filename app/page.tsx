@@ -422,6 +422,7 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [sidebarHidden, setSidebarHidden] = useState(false);
 
   async function loadAuth() {
     setLoading(true);
@@ -1650,7 +1651,11 @@ export default function Home() {
   }
 
   return (
-    <main className="app">
+    <main className={`app ${sidebarHidden ? "sidebar-hidden" : ""}`}>
+      <button className="sidebar-toggle" onClick={() => setSidebarHidden((current) => !current)} type="button">
+        {sidebarHidden ? "Mostrar menu" : "Esconder menu"}
+      </button>
+
       <aside className="sidebar">
         <button className="brand" onClick={() => setView("home")}>
           <div className="mark">TP</div>

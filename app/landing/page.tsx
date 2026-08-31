@@ -3,12 +3,16 @@ import { accessPackages } from "@/lib/packages";
 
 const benefits = [
   {
+    title: "Falas de vídeo com IA",
+    text: "Gere Gancho, Interesse e CTA a partir da descrição do produto, revise a prévia e aplique nos cards sem mexer no prompt técnico."
+  },
+  {
     title: "Prompts por negócio e produto",
     text: "Organize lojas, produtos, imagens, vídeos e copies em uma biblioteca fácil de encontrar."
   },
   {
     title: "Vídeos com partes e falas",
-    text: "Separe versões de vídeos por tipo, edite o bloco SPEECH e mantenha os prompts originais salvos."
+    text: "Separe versões de vídeos por tipo, edite o bloco SPEECH e crie variações de fala com mais agilidade."
   },
   {
     title: "Copiar e produzir rápido",
@@ -22,9 +26,9 @@ const benefits = [
 
 const steps = [
   "Cadastre o negócio ou loja",
-  "Crie produtos e categorias",
+  "Descreva o produto para orientar a IA",
   "Salve prompts de imagem, vídeo e copy",
-  "Copie, cole na IA e produza em escala"
+  "Gere falas, copie prompts e produza em escala"
 ];
 
 export default function LandingPage() {
@@ -56,7 +60,8 @@ export default function LandingPage() {
             </div>
             <div className="scene-columns">
               <div className="scene-column">
-                <strong>Video 1</strong>
+                <strong>Vídeo 1</strong>
+                <button className="scene-ai-button">Gerar falas IA</button>
                 <div className="scene-card">
                   <span />
                   <b>Parte 1</b>
@@ -77,17 +82,17 @@ export default function LandingPage() {
               </div>
               <div className="scene-prompt">
                 <small>SPEECH (Portuguese BR)</small>
-                <p>Meninas, olha esse modelo que acabou de chegar...</p>
+                <p>Essa peça tem aquele caimento leve que veste bem sem complicar o look...</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="landing-hero-copy">
-          <span className="landing-kicker">Biblioteca de prompts para produção em escala</span>
+          <span className="landing-kicker">Biblioteca de prompts com geração de falas por IA</span>
           <h1>TikPrompt Studio</h1>
           <p>
-            Organize prompts de imagem, roteiros de vídeo e copies por negócio e produto para produzir conteúdo de vendas com mais velocidade no TikTok, Instagram, Facebook e e-commerce.
+            Organize prompts de imagem, roteiros de vídeo e copies por negócio e produto. Gere falas de vídeo com IA, revise antes de aplicar e produza conteúdo de vendas com mais velocidade.
           </p>
           <div className="landing-cta-row">
             <a className="landing-primary" href="#pacotes">Quero organizar meus prompts</a>
@@ -99,8 +104,8 @@ export default function LandingPage() {
       <section className="landing-section">
         <div className="section-heading">
           <span>Para quem é</span>
-          <h2>Feito para quem produz conteúdo comercial todos os dias</h2>
-          <p>Criadores profissionais, gestores de e-commerce, social sellers e equipes que precisam transformar produtos em conteúdo pronto para venda.</p>
+          <h2>Feito para quem precisa transformar produto em vídeo todos os dias</h2>
+          <p>Criadores profissionais, gestores de e-commerce, social sellers e equipes que precisam de prompts organizados e falas comerciais prontas para testar.</p>
         </div>
         <div className="benefit-grid">
           {benefits.map((benefit) => (
@@ -115,7 +120,7 @@ export default function LandingPage() {
       <section className="landing-section workflow-band">
         <div className="section-heading">
           <span>Como funciona</span>
-          <h2>Da ideia ao prompt certo em poucos cliques</h2>
+          <h2>Da descrição do produto à fala pronta em poucos cliques</h2>
         </div>
         <div className="workflow-grid">
           {steps.map((step, index) => (
@@ -152,9 +157,9 @@ export default function LandingPage() {
 
       <section className="landing-final" id="contato">
         <div>
-          <span className="landing-kicker">Produção rápida, biblioteca limpa</span>
-          <h2>Transforme seus prompts em um sistema de trabalho.</h2>
-          <p>Menos procura, menos retrabalho e mais velocidade para criar conteúdo de produto.</p>
+          <span className="landing-kicker">Produção rápida, biblioteca limpa e IA no fluxo</span>
+          <h2>Transforme seus prompts em uma operação de conteúdo.</h2>
+          <p>Menos procura, menos retrabalho e mais velocidade para gerar falas, revisar vídeos e produzir conteúdo de produto.</p>
         </div>
         <a className="landing-primary" href="#pacotes">Escolher um pacote</a>
       </section>

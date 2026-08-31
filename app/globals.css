@@ -942,7 +942,7 @@ input:disabled {
 .welcome-grid {
   grid-area: cards;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 
@@ -965,6 +965,15 @@ input:disabled {
   background: #0b8f83;
 }
 
+.welcome-card.ai-card {
+  background: linear-gradient(135deg, #e8f4ff, #e9fffa);
+  border-color: rgba(28, 111, 211, 0.28);
+}
+
+.welcome-card.ai-card::before {
+  background: linear-gradient(90deg, #1c6fd3, #16b9a8);
+}
+
 .welcome-card:nth-child(2)::before {
   background: #ffb13d;
 }
@@ -975,6 +984,10 @@ input:disabled {
 
 .welcome-card:nth-child(4)::before {
   background: #171a19;
+}
+
+.welcome-card:nth-child(5)::before {
+  background: #0b8f83;
 }
 
 .welcome-card span {
@@ -2345,6 +2358,19 @@ textarea {
   background: rgba(255, 248, 232, 0.9);
 }
 
+.scene-ai-button {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1c6fd3, #16b9a8);
+  color: #fff;
+  width: fit-content;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(28, 111, 211, 0.22);
+}
+
 .scene-card {
   border: 1px solid #dbe3df;
   border-radius: 8px;
@@ -2474,7 +2500,7 @@ textarea {
 .benefit-grid,
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px;
 }
 

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TikPrompt Studio",
-  description: "Biblioteca operacional de prompts para TikTok Shop"
+  description: "Biblioteca de prompts com geração de falas por IA para vídeos de venda"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

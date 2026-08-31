@@ -1828,7 +1828,7 @@ export default function Home() {
               <span className="welcome-kicker">Bem-vindo</span>
               <h1>TikPrompt Studio</h1>
               <p>
-                Organize prompts por negócio e produto, copie com velocidade e mantenha suas variações de imagem, vídeo e copy prontas para produção.
+                Organize prompts por negócio e produto, gere falas de vídeo com IA e mantenha suas variações de imagem, vídeo e copy prontas para produção.
               </p>
               <div className="welcome-audience">
                 <strong>Público-alvo</strong>
@@ -1880,7 +1880,7 @@ export default function Home() {
                   <span className="play-mark">▶</span>
                 </div>
                 <strong>Prompt pronto</strong>
-                <span>copiar e produzir</span>
+                <span>gerar, copiar e produzir</span>
               </div>
               <div className="creative-strip" aria-hidden="true">
                 <span />
@@ -1896,7 +1896,7 @@ export default function Home() {
                   <span />
                 </div>
                 <strong>Vídeo 01</strong>
-                <span>Parte + fala + copy</span>
+                <span>Gancho + Interesse + CTA</span>
               </div>
               <div className="creative-socials">
                 <span className="social-logo tiktok">TikTok</span>
@@ -1906,11 +1906,15 @@ export default function Home() {
               </div>
               <div className="creative-caption">
                 <strong>Conteúdo em escala</strong>
-                <span>Imagem, vídeo e copy organizados para vender todos os dias.</span>
+                <span>Imagem, vídeo, copy e falas com IA para vender todos os dias.</span>
               </div>
             </section>
 
             <div className="welcome-grid">
+              <article className="welcome-card ai-card">
+                <h2>Falas com IA</h2>
+                <p>Descreva o produto e gere Gancho, Interesse e CTA para o vídeo inteiro, com prévia editável antes de aplicar nos cards.</p>
+              </article>
               <article className="welcome-card">
                 <h2>Tudo em um só lugar</h2>
                 <p>Chega de abrir 10 abas diferentes para encontrar o prompt certo. Imagens, roteiros de vídeo e copies ficam organizados a um clique.</p>
@@ -1920,8 +1924,8 @@ export default function Home() {
                 <p>Cada negócio tem sua própria estrutura de produtos. Você cria uma vez, organiza do seu jeito e acessa sem confusão.</p>
               </article>
               <article className="welcome-card">
-                <h2>Videos com partes numeradas</h2>
-                <p>Produza videos com consistencia usando partes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
+                <h2>Vídeos com partes numeradas</h2>
+                <p>Produza vídeos com consistência usando partes individuais e o campo SPEECH destacado para editar a fala com agilidade.</p>
               </article>
               <article className="welcome-card">
                 <h2>Copies prontas para copiar</h2>

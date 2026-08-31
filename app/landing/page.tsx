@@ -70,7 +70,7 @@ export default function LandingPage() {
         <div className="section-heading">
           <span>Para quem é</span>
           <h2>Feito para quem precisa transformar produto em vídeo todos os dias</h2>
-          <p>Criadores profissionais, gestores de e-commerce, social sellers e equipes que precisam de prompts organizados e falas comerciais prontas para testar.</p>
+          <p>Criadores, gestores de e-commerce, social sellers e equipes que precisam de prompts organizados e falas comerciais prontas para testar.</p>
         </div>
         <div className="benefit-grid">
           {benefits.map((benefit) => (

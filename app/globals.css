@@ -2444,6 +2444,7 @@ textarea {
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
   position: relative;
   z-index: 2;
+  animation: landing-rise 0.75s ease both;
 }
 
 .landing-demo-video {
@@ -2453,6 +2454,9 @@ textarea {
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
   padding: 10px;
   backdrop-filter: blur(16px);
+  animation:
+    landing-rise 0.85s ease 0.12s both,
+    demo-float 7s ease-in-out 1s infinite;
 }
 
 .landing-demo-video span {
@@ -2563,8 +2567,12 @@ textarea {
 .landing-final p {
   margin: 0;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.55;
+}
+
+.section-heading p {
+  max-width: 1180px;
 }
 
 .benefit-grid,
@@ -2580,6 +2588,28 @@ textarea {
   border-radius: var(--radius);
   padding: 22px;
   min-height: 190px;
+  animation: landing-card-in 0.68s ease both;
+}
+
+.benefit-card:nth-child(2),
+.workflow-grid article:nth-child(2),
+.plans-grid article:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.benefit-card:nth-child(3),
+.workflow-grid article:nth-child(3),
+.plans-grid article:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.benefit-card:nth-child(4),
+.workflow-grid article:nth-child(4) {
+  animation-delay: 0.18s;
+}
+
+.benefit-card:nth-child(5) {
+  animation-delay: 0.24s;
 }
 
 .benefit-card h3,
@@ -2648,6 +2678,7 @@ textarea {
   padding: 18px;
   display: grid;
   align-content: space-between;
+  animation: landing-card-in 0.68s ease both;
 }
 
 .workflow-grid span {
@@ -2672,6 +2703,51 @@ textarea {
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes demo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-copy,
+  .landing-demo-video,
+  .benefit-card,
+  .workflow-grid article,
+  .plans-grid article {
+    animation: none;
+  }
 }
 
 .plans-grid a {

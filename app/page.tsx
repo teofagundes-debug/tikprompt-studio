@@ -1969,9 +1969,9 @@ export default function Home() {
                 </button>
               ) : (
                 <div className="product-current product-group-entry">
-                  <div>
+                  <div className="product-group-summary">
                     <small>Selecione por grupo</small>
-                    <strong>Escolha o grupo de produtos</strong>
+                    <strong>Escolha um grupo</strong>
                     <em>{business.products.length} produtos cadastrados</em>
                   </div>
                   <div className="product-group-buttons">

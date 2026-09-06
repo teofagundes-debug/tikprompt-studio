@@ -1250,6 +1250,43 @@ input:disabled {
   font-weight: 900;
 }
 
+.product-group-entry {
+  align-items: stretch;
+  cursor: default;
+}
+
+.product-group-entry > div:first-child {
+  min-width: 170px;
+  display: grid;
+  align-content: center;
+}
+
+.product-group-buttons {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.product-group-buttons button {
+  border: 1px solid rgba(11, 143, 131, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #075f57;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.product-group-buttons button.active {
+  border-color: #101312;
+  background: #101312;
+  color: #fff;
+}
+
 .product-current-arrow {
   width: 26px;
   height: 26px;

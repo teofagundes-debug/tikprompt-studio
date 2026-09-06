@@ -495,7 +495,7 @@ export default function Home() {
   }, []);
 
   const business = businesses.find((item) => item.id === businessId) ?? businesses[0];
-  const product = business?.products.find((item) => item.id === productId) ?? business?.products[0];
+  const product = business?.products.find((item) => item.id === productId);
   const favoriteGroups = useMemo(() => normalizeFavoriteGroups(business?.favoriteGroups), [business?.favoriteGroups]);
   const selectedFavoriteGroup = favoriteGroups.find((item) => sameText(item, favoriteGroupName)) ?? favoriteGroups[0] ?? defaultFavoriteGroups[0];
   const totalProducts = businesses.reduce((sum, item) => sum + item.products.length, 0);
@@ -565,7 +565,7 @@ export default function Home() {
     if (!business && businesses.length) setBusinessId(businesses[0].id);
     if (business && !businessId) setBusinessId(business.id);
     if (business && (!product || !business.products.some((item) => item.id === productId))) {
-      setProductId(business.products[0]?.id ?? "");
+      setProductId("");
     }
   }, [business, businessId, businesses, product, productId]);
 
@@ -693,17 +693,10 @@ export default function Home() {
   async function copyProductToBusiness(targetBusiness: Business) {
     if (!business || !product) return;
 
-    const response = await fetch("/api/products", {
+    const response = await fetch(`/api/products/${product.id}/copy-to-business`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        businessId: targetBusiness.id,
-        name: product.name,
-        description: product.description,
-        imageUrl: product.imageUrl,
-        weeklyFocus: product.weeklyFocus,
-        favoriteGroup: productFavoriteGroup(product)
-      })
+      body: JSON.stringify({ businessId: targetBusiness.id })
     });
     const data = await readJson(response);
 
@@ -1352,10 +1345,17 @@ export default function Home() {
   }
 
   function openBusiness(businessItem: Business) {
+    const groups = normalizeFavoriteGroups(businessItem.favoriteGroups);
+    const firstGroupWithProducts = groups.find((group) => businessItem.products.some((item) => productIsInFavoriteGroup(item, group)));
+
     setBusinessId(businessItem.id);
-    setProductId(businessItem.products[0]?.id ?? "");
+    setProductId("");
     setCategory("Imagem");
     setVideoTakeType(defaultVideoTypes[0]);
+    setProductPickerOpen(true);
+    setProductPickerMode(firstGroupWithProducts ?? "all");
+    setFavoriteGroupName(firstGroupWithProducts ?? groups[0] ?? defaultFavoriteGroups[0]);
+    setProductSearch("");
     setView("library");
     closeEditor();
   }
@@ -1957,15 +1957,52 @@ export default function Home() {
           <section className="product-row">
             <div className="product-selector">
               <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
-              <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
-                {product?.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}
-                <span>
-                  <small>Produto selecionado</small>
-                  <strong>{product?.name ?? "Nenhum produto"}</strong>
-                  {productFavoriteGroup(product) && <em>Grupo: {productFavoriteGroup(product)}</em>}
-                </span>
-                <span className="product-current-arrow">v</span>
-              </button>
+              {product ? (
+                <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
+                  {product.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}
+                  <span>
+                    <small>Produto selecionado</small>
+                    <strong>{product.name}</strong>
+                    {productFavoriteGroup(product) && <em>Grupo: {productFavoriteGroup(product)}</em>}
+                  </span>
+                  <span className="product-current-arrow">v</span>
+                </button>
+              ) : (
+                <div className="product-current product-group-entry">
+                  <div>
+                    <small>Selecione por grupo</small>
+                    <strong>Escolha o grupo de produtos</strong>
+                    <em>{business.products.length} produtos cadastrados</em>
+                  </div>
+                  <div className="product-group-buttons">
+                    <button
+                      className={productPickerMode === "all" ? "active" : ""}
+                      onClick={() => {
+                        setProductPickerMode("all");
+                        setProductPickerOpen(true);
+                      }}
+                      type="button"
+                    >
+                      Todos
+                    </button>
+                    {favoriteGroups.map((group) => (
+                      <button
+                        className={sameText(productPickerMode, group) ? "active" : ""}
+                        key={group}
+                        onClick={() => {
+                          setProductPickerMode(group);
+                          setFavoriteGroupName(group);
+                          setProductPickerOpen(true);
+                        }}
+                        type="button"
+                      >
+                        {group} {favoriteGroupCount(group) ? `(${favoriteGroupCount(group)})` : ""}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="product-current-arrow">v</span>
+                </div>
+              )}
             </div>
             <div className="action-row">
               <button

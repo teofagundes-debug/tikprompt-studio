@@ -144,6 +144,11 @@ function productIsInFavoriteGroup(product: Pick<Product, "favoriteGroup" | "week
   return sameText(productFavoriteGroup(product), group);
 }
 
+function firstProductForGroup(business: Business, group: string) {
+  if (group === "all") return business.products[0];
+  return business.products.find((item) => productIsInFavoriteGroup(item, group)) ?? business.products[0];
+}
+
 function categoryLabel(value: string) {
   return value === "Video" ? "Vídeo" : value;
 }
@@ -565,9 +570,9 @@ export default function Home() {
     if (!business && businesses.length) setBusinessId(businesses[0].id);
     if (business && !businessId) setBusinessId(business.id);
     if (business && (!product || !business.products.some((item) => item.id === productId))) {
-      setProductId("");
+      setProductId(firstProductForGroup(business, productPickerMode)?.id ?? "");
     }
-  }, [business, businessId, businesses, product, productId]);
+  }, [business, businessId, businesses, product, productId, productPickerMode]);
 
   useEffect(() => {
     if (!favoriteGroups.some((item) => sameText(item, favoriteGroupName))) {
@@ -1347,13 +1352,15 @@ export default function Home() {
   function openBusiness(businessItem: Business) {
     const groups = normalizeFavoriteGroups(businessItem.favoriteGroups);
     const firstGroupWithProducts = groups.find((group) => businessItem.products.some((item) => productIsInFavoriteGroup(item, group)));
+    const initialGroup = firstGroupWithProducts ?? "all";
+    const initialProduct = firstProductForGroup(businessItem, initialGroup);
 
     setBusinessId(businessItem.id);
-    setProductId("");
+    setProductId(initialProduct?.id ?? "");
     setCategory("Imagem");
     setVideoTakeType(defaultVideoTypes[0]);
     setProductPickerOpen(true);
-    setProductPickerMode(firstGroupWithProducts ?? "all");
+    setProductPickerMode(initialGroup);
     setFavoriteGroupName(firstGroupWithProducts ?? groups[0] ?? defaultFavoriteGroups[0]);
     setProductSearch("");
     setView("library");

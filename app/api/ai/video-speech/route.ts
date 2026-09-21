@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { lockCtaWithoutSizes, noSizeCta } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
@@ -116,7 +117,7 @@ function buildVideoInstruction(options: {
     "Gancho prende atenção com uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
     "Interesse continua falando da peça, modelo, como veste, tecido, conforto, tamanhos, cores, elasticidade ou uso no dia a dia quando estiverem na descrição.",
     "No CTA, se a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: este modelo veste do P ao GG.",
-    "Se a descrição não informar tamanhos, não invente; use outro detalhe real do produto para iniciar o CTA.",
+    `Se a descrição não informar tamanhos explícitos, o CTA deve conter somente esta frase, sem acrescentar nada: ${noSizeCta}`,
     "Finalize todo CTA exatamente com: Confira mais detalhes no carrinho laranja e entregamos para todo o Brasil.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
@@ -252,7 +253,16 @@ export async function POST(request: Request) {
   }
 
   const byId = new Map(items.map((item) => [item.promptId, item]));
-  const orderedItems = prompts.map((prompt) => byId.get(prompt.id)).filter(Boolean) as SpeechItem[];
+  const orderedItems = prompts
+    .map((prompt) => {
+      const item = byId.get(prompt.id);
+      if (!item) return undefined;
+      return {
+        ...item,
+        speech: lockCtaWithoutSizes(item.speech, speechRoleForPrompt(prompt), first.product.description ?? "")
+      };
+    })
+    .filter(Boolean) as SpeechItem[];
   if (orderedItems.length !== prompts.length) {
     return NextResponse.json({ error: "A IA não retornou uma fala para cada parte do vídeo." }, { status: 502 });
   }

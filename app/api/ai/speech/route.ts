@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { lockCtaWithoutSizes, noSizeCta } from "@/lib/ai-cta";
+import { lockProductCta, noSizeCta } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
@@ -69,9 +69,9 @@ function buildSpeechInstruction(options: {
     "Crie uma única fala natural em português brasileiro para o campo SPEECH de um prompt de vídeo.",
     `A função desta fala é: ${options.speechRole}.`,
     "Se a função for Gancho, crie uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
-    "Se a função for CTA e a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: este modelo veste do P ao GG.",
+    "Se a função for CTA e a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: Veste do P ao GG, confira todos detalhes no carrinho laranja e entregamos para todo Brasil.",
     `Se a função for CTA e a descrição não informar tamanhos explícitos, responda somente com esta frase, sem acrescentar nada: ${noSizeCta}`,
-    "Todo CTA deve terminar exatamente com: Confira mais detalhes no carrinho laranja e entregamos para todo o Brasil.",
+    "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
     "Se a função for Interesse, não faça abertura de vídeo nem novo gancho; cite detalhes concretos da peça como tecido, como veste, caimento, tamanho, conforto, transparência, elasticidade, cores ou uso no dia a dia quando estiverem na descrição.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error }, { status: aiResponse.status });
   }
 
-  const speech = lockCtaWithoutSizes(
+  const speech = lockProductCta(
     cleanSpeech(outputText(data)),
     speechRole,
     prompt.product.description ?? ""

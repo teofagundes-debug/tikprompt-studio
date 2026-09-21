@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { lockCtaWithoutSizes, noSizeCta } from "@/lib/ai-cta";
+import { lockProductCta, noSizeCta } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
@@ -116,9 +116,9 @@ function buildVideoInstruction(options: {
     "Não faça cada parte parecer um vídeo novo. Parte 2 em diante deve continuar a conversa da parte anterior.",
     "Gancho prende atenção com uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
     "Interesse continua falando da peça, modelo, como veste, tecido, conforto, tamanhos, cores, elasticidade ou uso no dia a dia quando estiverem na descrição.",
-    "No CTA, se a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: este modelo veste do P ao GG.",
+    "No CTA, se a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: Veste do P ao GG, confira todos detalhes no carrinho laranja e entregamos para todo Brasil.",
     `Se a descrição não informar tamanhos explícitos, o CTA deve conter somente esta frase, sem acrescentar nada: ${noSizeCta}`,
-    "Finalize todo CTA exatamente com: Confira mais detalhes no carrinho laranja e entregamos para todo o Brasil.",
+    "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite aberturas como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
@@ -259,7 +259,7 @@ export async function POST(request: Request) {
       if (!item) return undefined;
       return {
         ...item,
-        speech: lockCtaWithoutSizes(item.speech, speechRoleForPrompt(prompt), first.product.description ?? "")
+        speech: lockProductCta(item.speech, speechRoleForPrompt(prompt), first.product.description ?? "")
       };
     })
     .filter(Boolean) as SpeechItem[];

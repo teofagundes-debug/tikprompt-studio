@@ -1964,7 +1964,14 @@ export default function Home() {
         <div className="product-zone">
           <section className="product-row">
             <div className="product-selector">
-              <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
+              <div className="product-selector-head">
+                <span className="field-label product-chooser-label">Escolha aqui o produto:</span>
+                {product && !productPickerOpen && (
+                  <button className="product-back-button" onClick={() => setProductPickerOpen(true)} type="button">
+                    ← VOLTAR
+                  </button>
+                )}
+              </div>
               {product ? (
                 <button className="product-current" onClick={() => setProductPickerOpen((current) => !current)} disabled={!business.products.length}>
                   {product.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}

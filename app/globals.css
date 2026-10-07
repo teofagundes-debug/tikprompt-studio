@@ -1061,7 +1061,7 @@ input:disabled {
 
 .product-focus-layout.is-focused {
   position: relative;
-  min-height: calc(clamp(240px, 30vh, 360px) + 200px);
+  min-height: calc(clamp(480px, 60vh, 720px) + 200px);
   padding: 12px 24px 24px;
 }
 
@@ -1142,7 +1142,7 @@ input:disabled {
 
 .product-detail-preview {
   min-width: 0;
-  height: clamp(240px, 30vh, 360px);
+  height: clamp(480px, 60vh, 720px);
   min-height: 0;
   margin: 0;
   border: 1px solid var(--line);
@@ -1722,7 +1722,7 @@ input:disabled {
   }
 
   .product-detail-preview {
-    height: clamp(220px, 36vh, 340px);
+    height: clamp(440px, 72vh, 680px);
     min-height: 0;
   }
 }

@@ -1105,6 +1105,26 @@ input:disabled {
   min-width: 0;
 }
 
+.product-focus-layout.is-focused.editor-active {
+  min-height: 0;
+}
+
+.product-focus-layout.is-focused.editor-active .product-row {
+  display: none;
+}
+
+.product-focus-layout.is-focused.editor-active .product-description-box,
+.product-focus-layout.is-focused.editor-active .tabs-row,
+.product-focus-layout.is-focused.editor-active .subtabs-row,
+.product-focus-layout.is-focused.editor-active .workspace {
+  width: 100%;
+}
+
+.product-focus-layout.is-focused.editor-active .workspace {
+  position: relative;
+  z-index: 20;
+}
+
 .product-focus-layout.is-focused .action-row {
   width: 100%;
   display: grid;

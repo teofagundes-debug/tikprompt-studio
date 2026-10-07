@@ -1961,7 +1961,7 @@ export default function Home() {
           </label>
         </header>
 
-        <div className={`product-focus-layout ${product && !productPickerOpen ? "is-focused" : ""}`}>
+        <div className={`product-focus-layout ${product && !productPickerOpen ? "is-focused" : ""} ${editorOpen ? "editor-active" : ""}`}>
         <div className="product-zone">
           <section className="product-row">
             <div className="product-selector">

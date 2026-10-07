@@ -418,6 +418,7 @@ export default function Home() {
   const [favoriteGroupName, setFavoriteGroupName] = useState(defaultFavoriteGroups[0]);
   const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
   const [copyStoreOpen, setCopyStoreOpen] = useState(false);
+  const [productImagePreviewOpen, setProductImagePreviewOpen] = useState(false);
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
   const [generatingSpeech, setGeneratingSpeech] = useState(false);
@@ -2076,7 +2077,15 @@ export default function Home() {
                   <strong>{product.name}</strong>
                 </figcaption>
                 {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.name} />
+                  <button
+                    className="product-detail-image-button"
+                    onClick={() => setProductImagePreviewOpen(true)}
+                    title="Ampliar foto"
+                    type="button"
+                  >
+                    <img src={product.imageUrl} alt={product.name} />
+                    <span className="product-detail-zoom-indicator" aria-hidden="true" />
+                  </button>
                 ) : (
                   <div className="product-detail-placeholder">Adicione uma foto para visualizar os detalhes do produto.</div>
                 )}
@@ -2442,6 +2451,23 @@ export default function Home() {
                 Aplicar falas
               </button>
             </div>
+          </div>
+        </section>
+      )}
+
+      {productImagePreviewOpen && product?.imageUrl && (
+        <section
+          className="product-image-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Foto ampliada de ${product.name}`}
+          onClick={() => setProductImagePreviewOpen(false)}
+        >
+          <div className="product-image-lightbox-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="secondary" onClick={() => setProductImagePreviewOpen(false)} type="button">
+              Fechar
+            </button>
+            <img src={product.imageUrl} alt={product.name} />
           </div>
         </section>
       )}

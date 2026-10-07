@@ -1960,6 +1960,7 @@ export default function Home() {
           </label>
         </header>
 
+        <div className={`product-focus-layout ${product && !productPickerOpen ? "is-focused" : ""}`}>
         <div className="product-zone">
           <section className="product-row">
             <div className="product-selector">
@@ -2061,6 +2062,19 @@ export default function Home() {
                 />
               </label>
             </div>
+            {product && !productPickerOpen && (
+              <figure className="product-detail-preview">
+                <figcaption>
+                  <span>Foto do produto</span>
+                  <strong>{product.name}</strong>
+                </figcaption>
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt={product.name} />
+                ) : (
+                  <div className="product-detail-placeholder">Adicione uma foto para visualizar os detalhes do produto.</div>
+                )}
+              </figure>
+            )}
           </section>
 
           {product && (
@@ -2384,6 +2398,7 @@ export default function Home() {
             </section>
           )}
         </section>
+        </div>
           </>
         )}
       </section>

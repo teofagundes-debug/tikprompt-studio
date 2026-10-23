@@ -30,6 +30,7 @@ type Product = {
   id: string;
   name: string;
   description: string;
+  copyColor: string;
   imageUrl: string | null;
   weeklyFocus: boolean;
   favoriteGroup: string | null;
@@ -417,6 +418,8 @@ export default function Home() {
   const [productPickerMode, setProductPickerMode] = useState("all");
   const [favoriteGroupName, setFavoriteGroupName] = useState(defaultFavoriteGroups[0]);
   const [productDescriptionDraft, setProductDescriptionDraft] = useState("");
+  const [copyColorModalOpen, setCopyColorModalOpen] = useState(false);
+  const [copyColorDraft, setCopyColorDraft] = useState("");
   const [copyStoreOpen, setCopyStoreOpen] = useState(false);
   const [productImagePreviewOpen, setProductImagePreviewOpen] = useState(false);
   const [copiedPromptId, setCopiedPromptId] = useState("");
@@ -767,6 +770,35 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description })
     });
+  }
+
+  async function updateProductCopyColor(copyColor: string) {
+    if (!product) return;
+    const normalizedColor = copyColor.trim();
+
+    setBusinesses((current) =>
+      current.map((biz) =>
+        biz.id === business?.id
+          ? { ...biz, products: biz.products.map((item) => (item.id === product.id ? { ...item, copyColor: normalizedColor } : item)) }
+          : biz
+      )
+    );
+
+    const response = await fetch(`/api/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ copyColor: normalizedColor })
+    });
+    const data = await readJson(response);
+
+    if (!response.ok) {
+      await loadData();
+      showToast(data.error ?? "Não foi possível salvar a cor");
+      return;
+    }
+
+    setCopyColorModalOpen(false);
+    showToast(normalizedColor ? `Cor da copy: ${normalizedColor}` : "Cor da copy removida");
   }
 
   async function updateProductImage(file?: File) {
@@ -2094,12 +2126,25 @@ export default function Home() {
           </section>
 
           {product && (
-            <label className="product-description-box">
-              <span>
-                <strong>Descrição do produto para IA</strong>
-                <small>Informe tecido, cores, diferenciais, benefícios e detalhes visíveis para orientar a criação da fala.</small>
-              </span>
+            <section className="product-description-box">
+              <div className="product-description-meta">
+                <span>
+                  <strong>Descrição do produto para IA</strong>
+                  <small>Informe tecido, diferenciais, benefícios e detalhes visíveis. Os tamanhos não serão usados na copy.</small>
+                </span>
+                <button
+                  className={`copy-color-button ${product.copyColor ? "active" : ""}`}
+                  onClick={() => {
+                    setCopyColorDraft(product.copyColor ?? "");
+                    setCopyColorModalOpen(true);
+                  }}
+                  type="button"
+                >
+                  {product.copyColor ? `Cor da copy: ${product.copyColor}` : "Definir cor da copy"}
+                </button>
+              </div>
               <textarea
+                aria-label="Descrição do produto para IA"
                 value={productDescriptionDraft}
                 onBlur={() => {
                   if (productDescriptionDraft !== (product.description ?? "")) {
@@ -2107,9 +2152,9 @@ export default function Home() {
                   }
                 }}
                 onChange={(event) => setProductDescriptionDraft(event.target.value)}
-                placeholder="Ex: Vestido midi em viscose, alça fina, caimento leve, disponível em várias cores, ideal para verão..."
+                placeholder="Ex: Vestido midi em viscose, alça fina, caimento leve, ideal para verão..."
               />
-            </label>
+            </section>
           )}
 
           {productPickerOpen && (
@@ -2468,6 +2513,45 @@ export default function Home() {
               Fechar
             </button>
             <img src={product.imageUrl} alt={product.name} />
+          </div>
+        </section>
+      )}
+
+      {copyColorModalOpen && product && (
+        <section className="speech-preview-backdrop" role="dialog" aria-modal="true" aria-label="Definir cor usada na copy">
+          <div className="speech-preview-modal copy-color-modal">
+            <div className="panel-head">
+              <div>
+                <h2>Cor da próxima copy</h2>
+                <span>{product.name} - atualize sempre que mudar a cor da peça</span>
+              </div>
+              <button className="ghost" onClick={() => setCopyColorModalOpen(false)} type="button">
+                Fechar
+              </button>
+            </div>
+            <div className="copy-color-body">
+              <label className="field">
+                <span className="field-label">Cor que a IA deve mencionar</span>
+                <input
+                  autoFocus
+                  value={copyColorDraft}
+                  onChange={(event) => setCopyColorDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") updateProductCopyColor(copyColorDraft);
+                  }}
+                  placeholder="Ex: azul-marinho, vermelho, preto"
+                />
+              </label>
+              <p>Deixe vazio quando não quiser citar uma cor. A IA não vai inventar outra cor.</p>
+            </div>
+            <div className="speech-preview-actions">
+              <button className="secondary" onClick={() => setCopyColorModalOpen(false)} type="button">
+                Cancelar
+              </button>
+              <button className="primary" onClick={() => updateProductCopyColor(copyColorDraft)} type="button">
+                Salvar cor
+              </button>
+            </div>
           </div>
         </section>
       )}

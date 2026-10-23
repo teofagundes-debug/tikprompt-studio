@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { lockProductCta, noSizeCta } from "@/lib/ai-cta";
+import { descriptionWithoutSizes, lockProductCta, noSizeCta, removeSizeReferences } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
@@ -95,6 +95,7 @@ function buildVideoInstruction(options: {
   businessName: string;
   productName: string;
   productDescription: string;
+  copyColor: string;
   takeType: string;
   scriptGroup: string;
   avoidSpeeches: string[];
@@ -106,18 +107,23 @@ function buildVideoInstruction(options: {
     currentSpeech: string;
   }>;
 }) {
+  const safeDescription = descriptionWithoutSizes(options.productDescription);
+  const colorInstruction = options.copyColor
+    ? `Cor escolhida para esta geração: ${options.copyColor}. Use essa cor de forma natural no Gancho ou Interesse e não mencione outras cores.`
+    : "Cor escolhida para esta geração: não informada. Não invente uma cor específica.";
+
   return [
     "Você é um copywriter brasileiro especialista em vídeos curtos para TikTok Shop, Instagram e e-commerce.",
     "Crie as falas de todas as partes de UM vídeo como uma conversa contínua, natural e fluida.",
     "Cada parte deve mirar 8 segundos em ritmo natural de conversa, sem ficar corrida.",
     "Cada fala deve ter uma única frase fluida.",
     "Gancho e Interesse devem ter de 16 a 20 palavras cada para dar mais corpo sem perder velocidade.",
-    "CTA pode ter de 18 a 26 palavras para fechar a venda com clareza dentro de cerca de 8 segundos.",
+    "O CTA usa uma frase fixa curta para reduzir risco de punição.",
     "Não faça cada parte parecer um vídeo novo. Parte 2 em diante deve continuar a conversa da parte anterior.",
     "Gancho prende atenção com uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
-    "Interesse continua falando da peça, modelo, como veste, tecido, conforto, tamanhos, cores, elasticidade ou uso no dia a dia quando estiverem na descrição.",
-    "No CTA, se a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: Veste do P ao GG, confira todos detalhes no carrinho laranja e entregamos para todo Brasil.",
-    `Se a descrição não informar tamanhos explícitos, o CTA deve conter somente esta frase, sem acrescentar nada: ${noSizeCta}`,
+    "Interesse continua falando da peça, modelo, como veste, tecido, conforto, elasticidade ou uso no dia a dia quando estiverem na descrição.",
+    "Nunca mencione tamanhos, numeração, medidas, faixas como P ao GG ou como a grade veste, mesmo que apareçam na descrição ou em falas anteriores.",
+    `O CTA deve conter somente esta frase, sem acrescentar nada: ${noSizeCta}`,
     "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
@@ -132,13 +138,14 @@ function buildVideoInstruction(options: {
     options.avoidSpeeches.length
       ? "IMPORTANTE: gere uma versao realmente nova, com angulo, abertura e escolha de palavras diferentes das falas anteriores listadas abaixo. Nao copie nem parafraseie de forma muito parecida."
       : "Crie uma versao com angulo de venda claro e natural.",
-    "Não invente dados objetivos específicos como tecido, composição, tamanho, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
+    "Não invente dados objetivos específicos como tecido, composição, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
     "Responda somente JSON válido neste formato: {\"items\":[{\"promptId\":\"id\",\"speech\":\"fala\"}]}",
     "Não inclua markdown, bloco de código, comentários, título, explicação ou texto fora do JSON.",
     "",
     `Negócio: ${options.businessName}`,
     `Produto: ${options.productName}`,
-    options.productDescription ? `Descrição do produto: ${options.productDescription}` : "Descrição do produto: não informada",
+    safeDescription ? `Descrição do produto sem informações de tamanho: ${safeDescription}` : "Descrição do produto: não informada",
+    colorInstruction,
     `Tipo de vídeo: ${options.takeType}`,
     `Vídeo/grupo: ${options.scriptGroup}`,
     "",
@@ -205,15 +212,16 @@ export async function POST(request: Request) {
     businessName: first.business.name,
     productName: first.product.name,
     productDescription: first.product.description ?? "",
+    copyColor: first.product.copyColor ?? "",
     takeType: first.takeType ?? "1-POV",
     scriptGroup: first.scriptGroup ?? "Video 1",
-    avoidSpeeches,
+    avoidSpeeches: avoidSpeeches.map(removeSizeReferences).filter(Boolean),
     parts: prompts.map((prompt, index) => ({
       promptId: prompt.id,
       title: prompt.title,
       role: speechRoleForPrompt(prompt),
       takeOrder: prompt.takeOrder ?? index + 1,
-      currentSpeech: prompt.speechLines.join(" ")
+      currentSpeech: removeSizeReferences(prompt.speechLines.join(" "))
     }))
   });
   const content: Array<{ type: "input_text"; text: string } | { type: "input_image"; image_url: string }> = [{ type: "input_text", text }];

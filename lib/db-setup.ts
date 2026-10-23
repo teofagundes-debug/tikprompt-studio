@@ -48,6 +48,7 @@ export async function ensureDatabaseSchema() {
       "id" TEXT NOT NULL,
       "name" TEXT NOT NULL,
       "description" TEXT NOT NULL DEFAULT '',
+      "copyColor" TEXT NOT NULL DEFAULT '',
       "imageUrl" TEXT,
       "weeklyFocus" BOOLEAN NOT NULL DEFAULT false,
       "favoriteGroup" TEXT,
@@ -103,6 +104,7 @@ export async function ensureDatabaseSchema() {
 
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Product_businessId_idx" ON "Product"("businessId");`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL DEFAULT '';`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "copyColor" TEXT NOT NULL DEFAULT '';`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "weeklyFocus" BOOLEAN NOT NULL DEFAULT false;`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "favoriteGroup" TEXT;`);

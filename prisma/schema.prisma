@@ -52,6 +52,7 @@ model Product {
   id         String   @id @default(cuid())
   name       String
   description String   @default("")
+  copyColor  String   @default("")
   imageUrl   String?
   weeklyFocus Boolean  @default(false)
   favoriteGroup String?

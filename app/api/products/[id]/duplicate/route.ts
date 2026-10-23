@@ -18,6 +18,7 @@ export async function POST(_request: Request, { params }: Params) {
     data: {
       name: `${product.name} - copia`,
       description: product.description,
+      copyColor: product.copyColor,
       imageUrl: product.imageUrl,
       weeklyFocus: false,
       businessId: product.businessId,

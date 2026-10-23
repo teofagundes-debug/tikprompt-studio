@@ -39,6 +39,7 @@ export async function POST(request: Request, { params }: Params) {
     data: {
       name: product.name,
       description: product.description,
+      copyColor: product.copyColor,
       imageUrl: product.imageUrl,
       weeklyFocus: product.weeklyFocus,
       favoriteGroup,

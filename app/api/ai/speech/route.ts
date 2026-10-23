@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { lockProductCta, noSizeCta } from "@/lib/ai-cta";
+import { descriptionWithoutSizes, lockProductCta, noSizeCta, removeSizeReferences } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
@@ -57,6 +57,7 @@ function buildSpeechInstruction(options: {
   businessName: string;
   productName: string;
   productDescription: string;
+  copyColor: string;
   promptTitle: string;
   speechRole: string;
   takeType: string;
@@ -64,22 +65,27 @@ function buildSpeechInstruction(options: {
   takeOrder: number;
   currentSpeech: string;
 }) {
+  const safeDescription = descriptionWithoutSizes(options.productDescription);
+  const colorInstruction = options.copyColor
+    ? `Cor escolhida para esta geração: ${options.copyColor}. Use essa cor de forma natural se a função for Gancho ou Interesse e não mencione outras cores.`
+    : "Cor escolhida para esta geração: não informada. Não invente uma cor específica.";
+
   return [
     "Você é um copywriter brasileiro especialista em vídeos curtos para TikTok Shop, Instagram e e-commerce.",
     "Crie uma única fala natural em português brasileiro para o campo SPEECH de um prompt de vídeo.",
     `A função desta fala é: ${options.speechRole}.`,
     "Se a função for Gancho, crie uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
-    "Se a função for CTA e a descrição informar tamanhos ou uma faixa de tamanhos, mencione-os exatamente como cadastrados, por exemplo: Veste do P ao GG, confira todos detalhes no carrinho laranja e entregamos para todo Brasil.",
-    `Se a função for CTA e a descrição não informar tamanhos explícitos, responda somente com esta frase, sem acrescentar nada: ${noSizeCta}`,
+    "Nunca mencione tamanhos, numeração, medidas, faixas como P ao GG ou como a grade veste, mesmo que apareçam na descrição ou na fala anterior.",
+    `Se a função for CTA, responda somente com esta frase, sem acrescentar nada: ${noSizeCta}`,
     "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
-    "Se a função for Interesse, não faça abertura de vídeo nem novo gancho; cite detalhes concretos da peça como tecido, como veste, caimento, tamanho, conforto, transparência, elasticidade, cores ou uso no dia a dia quando estiverem na descrição.",
+    "Se a função for Interesse, não faça abertura de vídeo nem novo gancho; cite detalhes concretos da peça como tecido, como veste, caimento, conforto, transparência, elasticidade ou uso no dia a dia quando estiverem na descrição.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite frases de abertura como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
     "A fala deve mirar 8 segundos em ritmo natural de conversa, sem ficar corrida.",
     "Use uma única frase fluida.",
     "Se for Gancho ou Interesse, use de 16 a 20 palavras para dar mais corpo sem perder velocidade.",
-    "Se for CTA, use de 18 a 26 palavras para fechar a venda com clareza dentro de cerca de 8 segundos.",
+    "Se for CTA, use somente a frase fixa indicada, sem acrescentar detalhes.",
     "Use a descrição do produto para entender benefícios reais, mas não copie a descrição como lista técnica.",
     "Transforme características em benefícios percebidos pela cliente: tecido vira sensação no corpo, caimento vira como veste, praticidade vira segurança no uso real.",
     "A fala deve parecer uma vendedora experiente conversando na loja: humana, profissional, confiante e comercial sem parecer propaganda forçada.",
@@ -92,18 +98,19 @@ function buildSpeechInstruction(options: {
     "Explore desejo, curiosidade, ocasião de uso, transformação visual, objeções comuns e benefícios percebidos.",
     "Pode ser mais ousado no gancho e mais comercial no CTA, sem ficar com cara de propaganda engessada.",
     "Não altere o prompt técnico. Não mencione instruções de câmera, ambiente, modelo, iluminação ou edição.",
-    "Não invente dados objetivos específicos como tecido, composição, tamanho, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
+    "Não invente dados objetivos específicos como tecido, composição, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
     "Responda somente com a fala final, sem título, sem aspas, sem markdown e sem explicações.",
     "",
     `Negócio: ${options.businessName}`,
     `Produto: ${options.productName}`,
-    options.productDescription ? `Descrição do produto: ${options.productDescription}` : "Descrição do produto: não informada",
+    safeDescription ? `Descrição do produto sem informações de tamanho: ${safeDescription}` : "Descrição do produto: não informada",
+    colorInstruction,
     `Card: ${options.promptTitle}`,
     `Identificação do bloco: ${options.speechRole}`,
     `Tipo de vídeo: ${options.takeType}`,
     `Vídeo/grupo: ${options.scriptGroup}`,
     `Parte: ${options.takeOrder}`,
-    options.currentSpeech ? `Fala atual para variar ou melhorar: ${options.currentSpeech}` : "Fala atual: vazia"
+    options.currentSpeech ? `Fala atual para variar ou melhorar: ${removeSizeReferences(options.currentSpeech)}` : "Fala atual: vazia"
   ].join("\n");
 }
 
@@ -138,6 +145,7 @@ export async function POST(request: Request) {
     businessName: prompt.business.name,
     productName: prompt.product.name,
     productDescription: prompt.product.description ?? "",
+    copyColor: prompt.product.copyColor ?? "",
     promptTitle: prompt.title,
     speechRole,
     takeType: prompt.takeType ?? "1-POV",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { descriptionWithoutSizes, lockProductCta, noSizeCta, removeSizeReferences } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
+import { copyStrategyFor, copyStrategyIndexFor, copyStrategyInstruction } from "@/lib/ai-copy-strategy";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
@@ -98,6 +99,7 @@ function buildVideoInstruction(options: {
   copyColor: string;
   takeType: string;
   scriptGroup: string;
+  generationIndex: number;
   avoidSpeeches: string[];
   parts: Array<{
     promptId: string;
@@ -120,8 +122,13 @@ function buildVideoInstruction(options: {
     "Gancho e Interesse devem ter de 16 a 20 palavras cada para dar mais corpo sem perder velocidade.",
     "O CTA usa uma frase fixa curta para reduzir risco de punição.",
     "Não faça cada parte parecer um vídeo novo. Parte 2 em diante deve continuar a conversa da parte anterior.",
-    "Gancho prende atenção com uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
-    "Interesse continua falando da peça, modelo, como veste, tecido, conforto, elasticidade ou uso no dia a dia quando estiverem na descrição.",
+    "Antes de escrever, monte mentalmente um banco com todos os fatos concretos disponíveis na descrição e na cor cadastrada.",
+    "Compare esse banco com as falas anteriores e priorize características ainda não usadas ou pouco exploradas.",
+    "Gancho prende atenção com uma abertura específica para o produto e pode apresentar um detalhe concreto ligado ao ângulo desta versão.",
+    "Interesse continua a mesma conversa e deve combinar de 2 a 3 detalhes relacionados da descrição, transformando cada um em benefício percebido.",
+    "Quando a descrição permitir, Gancho e Interesse juntos devem explorar pelo menos 3 fatos concretos diferentes do produto.",
+    "Não escreva uma lista técnica: conecte os detalhes com expressões naturais e situações reais da cliente.",
+    ...copyStrategyInstruction(options.generationIndex),
     "Nunca mencione tamanhos, numeração, medidas, faixas como P ao GG ou como a grade veste, mesmo que apareçam na descrição ou em falas anteriores.",
     `O CTA deve conter somente esta frase, sem acrescentar nada: ${noSizeCta}`,
     "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
@@ -136,8 +143,8 @@ function buildVideoInstruction(options: {
     "Prefira detalhes concretos e naturais, conectando uma característica da peça a um motivo claro para comprar.",
     "Use linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop, sem cara de propaganda engessada.",
     options.avoidSpeeches.length
-      ? "IMPORTANTE: gere uma versao realmente nova, com angulo, abertura e escolha de palavras diferentes das falas anteriores listadas abaixo. Nao copie nem parafraseie de forma muito parecida."
-      : "Crie uma versao com angulo de venda claro e natural.",
+      ? "IMPORTANTE: esta versão deve mudar o ângulo, o formato da abertura e o conjunto principal de detalhes. Trocar apenas sinônimos não conta como uma nova versão."
+      : "Crie uma versão com ângulo de venda claro, específico e natural.",
     "Não invente dados objetivos específicos como tecido, composição, desconto, garantia, prazo de entrega, marca ou característica física que não esteja no produto.",
     "Responda somente JSON válido neste formato: {\"items\":[{\"promptId\":\"id\",\"speech\":\"fala\"}]}",
     "Não inclua markdown, bloco de código, comentários, título, explicação ou texto fora do JSON.",
@@ -189,6 +196,7 @@ export async function POST(request: Request) {
   const avoidSpeeches = Array.isArray(body.avoidSpeeches)
     ? body.avoidSpeeches.map((item: unknown) => String(item).trim()).filter(Boolean).slice(-24)
     : [];
+  const generationIndex = Math.max(0, Number.parseInt(String(body.generationIndex ?? 0), 10) || 0);
   if (!promptIds.length) {
     return NextResponse.json({ error: "Informe os cards do vídeo." }, { status: 400 });
   }
@@ -208,6 +216,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Os cards precisam pertencer ao mesmo produto e negócio." }, { status: 400 });
   }
 
+  const strategyIndex = copyStrategyIndexFor(first.product.id, generationIndex);
   const text = buildVideoInstruction({
     businessName: first.business.name,
     productName: first.product.name,
@@ -215,6 +224,7 @@ export async function POST(request: Request) {
     copyColor: first.product.copyColor ?? "",
     takeType: first.takeType ?? "1-POV",
     scriptGroup: first.scriptGroup ?? "Video 1",
+    generationIndex: strategyIndex,
     avoidSpeeches: avoidSpeeches.map(removeSizeReferences).filter(Boolean),
     parts: prompts.map((prompt, index) => ({
       promptId: prompt.id,
@@ -293,6 +303,7 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({
+    strategy: copyStrategyFor(strategyIndex),
     items: orderedItems,
     usage: {
       model: aiSpeechModel,

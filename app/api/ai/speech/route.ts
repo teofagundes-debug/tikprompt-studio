@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { descriptionWithoutSizes, lockProductCta, noSizeCta, removeSizeReferences } from "@/lib/ai-cta";
 import { aiSpeechModel, estimateAiCostUsd } from "@/lib/ai-costs";
+import { copyStrategyIndexFor, copyStrategyInstruction } from "@/lib/ai-copy-strategy";
 import { requireUser } from "@/lib/auth";
 import { ensureDatabaseSchema } from "@/lib/db-setup";
 import { prisma } from "@/lib/prisma";
@@ -63,9 +64,11 @@ function buildSpeechInstruction(options: {
   takeType: string;
   scriptGroup: string;
   takeOrder: number;
+  generationIndex: number;
   currentSpeech: string;
 }) {
   const safeDescription = descriptionWithoutSizes(options.productDescription);
+  const isCta = options.speechRole.toLowerCase().includes("cta");
   const colorInstruction = options.copyColor
     ? `Cor escolhida para esta geração: ${options.copyColor}. Use essa cor de forma natural se a função for Gancho ou Interesse e não mencione outras cores.`
     : "Cor escolhida para esta geração: não informada. Não invente uma cor específica.";
@@ -74,12 +77,14 @@ function buildSpeechInstruction(options: {
     "Você é um copywriter brasileiro especialista em vídeos curtos para TikTok Shop, Instagram e e-commerce.",
     "Crie uma única fala natural em português brasileiro para o campo SPEECH de um prompt de vídeo.",
     `A função desta fala é: ${options.speechRole}.`,
-    "Se a função for Gancho, crie uma abertura diferente e específica para o produto; evite começar sempre com pergunta genérica.",
+    "Antes de escrever, monte mentalmente um banco com todos os fatos concretos da descrição e da cor cadastrada.",
+    "Se a função for Gancho, use uma abertura específica para o produto e conecte 1 ou 2 fatos reais ao ângulo desta versão; evite pergunta genérica.",
     "Nunca mencione tamanhos, numeração, medidas, faixas como P ao GG ou como a grade veste, mesmo que apareçam na descrição ou na fala anterior.",
     `Se a função for CTA, responda somente com esta frase, sem acrescentar nada: ${noSizeCta}`,
     "Não acrescente benefícios ou outras características da peça no CTA, pois eles já foram apresentados no bloco anterior.",
     "Nunca use CTA com clique no link, link na bio, acesse o link, chama no direct ou manda mensagem.",
-    "Se a função for Interesse, não faça abertura de vídeo nem novo gancho; cite detalhes concretos da peça como tecido, como veste, caimento, conforto, transparência, elasticidade ou uso no dia a dia quando estiverem na descrição.",
+    "Se a função for Interesse, continue a conversa sem criar outro gancho e conecte de 2 a 3 detalhes relacionados da descrição.",
+    "No Interesse, transforme cada característica em benefício percebido e use conectores naturais, sem parecer uma lista técnica.",
     "Para Interesse, prefira começar com expressões como: Esse modelo, Ele tem, Essa peça, O caimento, A proposta dele.",
     "Para Interesse, evite frases de abertura como: olha esse, você precisa ver, meninas olha, chegou agora, para tudo.",
     "A fala deve mirar 8 segundos em ritmo natural de conversa, sem ficar corrida.",
@@ -92,7 +97,8 @@ function buildSpeechInstruction(options: {
     "Evite frases genéricas como perfeito para qualquer ocasião, eleve seu estilo a outro patamar, peça indispensável, você vai amar ou você já imaginou.",
     "Evite palavras artificiais ou repetidas demais como silhueta, transformar seu look, arrasar, maravilhoso e incrível.",
     "Prefira detalhes concretos e naturais, conectando uma característica da peça a um motivo claro para comprar.",
-    "Não junte várias ideias na mesma fala; escolha uma ideia forte e diga de forma fluida.",
+    "Explore mais de um detalhe quando eles pertencerem ao mesmo ângulo de venda e couberem naturalmente na fala.",
+    ...(isCta ? [] : copyStrategyInstruction(options.generationIndex)),
     "Use uma linguagem criativa, persuasiva, curiosa e com energia de TikTok Shop.",
     "Varie bastante o ângulo de venda e evite repetir estruturas comuns ou frases genéricas.",
     "Explore desejo, curiosidade, ocasião de uso, transformação visual, objeções comuns e benefícios percebidos.",
@@ -126,6 +132,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const promptId = String(body.promptId ?? "");
+  const generationIndex = Math.max(0, Number.parseInt(String(body.generationIndex ?? 0), 10) || 0);
   if (!promptId) {
     return NextResponse.json({ error: "Informe o card de vídeo." }, { status: 400 });
   }
@@ -141,6 +148,7 @@ export async function POST(request: Request) {
 
   const currentSpeech = Array.isArray(body.speechLines) ? body.speechLines.join(" ") : prompt.speechLines.join(" ");
   const speechRole = String(body.speechRole ?? prompt.description ?? "").trim() || "Gancho";
+  const strategyIndex = copyStrategyIndexFor(prompt.product.id, generationIndex);
   const text = buildSpeechInstruction({
     businessName: prompt.business.name,
     productName: prompt.product.name,
@@ -151,6 +159,7 @@ export async function POST(request: Request) {
     takeType: prompt.takeType ?? "1-POV",
     scriptGroup: prompt.scriptGroup ?? "Video 1",
     takeOrder: prompt.takeOrder ?? 1,
+    generationIndex: strategyIndex,
     currentSpeech
   });
   const content: Array<{ type: "input_text"; text: string } | { type: "input_image"; image_url: string }> = [{ type: "input_text", text }];

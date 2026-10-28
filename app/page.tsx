@@ -108,6 +108,12 @@ type AiUsageSummary = {
 type VideoSpeechPreview = {
   scriptGroup: string;
   promptIds: string[];
+  generationIndex: number;
+  strategy: {
+    name: string;
+    hookStyle: string;
+    focus: string;
+  } | null;
   avoidSpeeches: string[];
   items: Array<{
     promptId: string;
@@ -425,6 +431,7 @@ export default function Home() {
   const [copiedPromptId, setCopiedPromptId] = useState("");
   const [draggedPromptId, setDraggedPromptId] = useState("");
   const [generatingSpeech, setGeneratingSpeech] = useState(false);
+  const [speechGenerationIndex, setSpeechGenerationIndex] = useState(0);
   const [generatingVideoSpeechGroup, setGeneratingVideoSpeechGroup] = useState("");
   const [videoSpeechPreview, setVideoSpeechPreview] = useState<VideoSpeechPreview | null>(null);
   const [search, setSearch] = useState("");
@@ -596,6 +603,10 @@ export default function Home() {
   useEffect(() => {
     setProductDescriptionDraft(product?.description ?? "");
   }, [product?.id, product?.description]);
+
+  useEffect(() => {
+    setSpeechGenerationIndex(0);
+  }, [draft?.id]);
 
   useEffect(() => {
     if (prompts.length && !prompts.some((prompt) => prompt.id === promptId)) {
@@ -1102,7 +1113,12 @@ export default function Home() {
       const response = await fetch("/api/ai/speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptId: draft.id, speechLines: draft.speechLines, speechRole: inferSpeechRole(draft) })
+        body: JSON.stringify({
+          promptId: draft.id,
+          speechLines: draft.speechLines,
+          speechRole: inferSpeechRole(draft),
+          generationIndex: speechGenerationIndex
+        })
       });
       const data = await readJson(response);
 
@@ -1117,13 +1133,19 @@ export default function Home() {
         speechLines,
         template: syncSpeechSection(draft.template, speechLines)
       });
+      setSpeechGenerationIndex((current) => current + 1);
       showToast("Fala gerada. Revise e salve.");
     } finally {
       setGeneratingSpeech(false);
     }
   }
 
-  async function generateVideoSpeechPreview(scriptGroup: string, groupPrompts: Prompt[], avoidSpeeches: string[] = []) {
+  async function generateVideoSpeechPreview(
+    scriptGroup: string,
+    groupPrompts: Prompt[],
+    avoidSpeeches: string[] = [],
+    generationIndex = 0
+  ) {
     if (!groupPrompts.length) return;
 
     setGeneratingVideoSpeechGroup(scriptGroup);
@@ -1131,7 +1153,7 @@ export default function Home() {
       const response = await fetch("/api/ai/video-speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptIds: groupPrompts.map((prompt) => prompt.id), avoidSpeeches })
+        body: JSON.stringify({ promptIds: groupPrompts.map((prompt) => prompt.id), avoidSpeeches, generationIndex })
       });
       const data = await readJson(response);
 
@@ -1144,6 +1166,8 @@ export default function Home() {
       setVideoSpeechPreview({
         scriptGroup,
         promptIds: groupPrompts.map((prompt) => prompt.id),
+        generationIndex,
+        strategy: data.strategy ?? null,
         avoidSpeeches: [...avoidSpeeches, ...data.items.map((item: { speech: string }) => item.speech).filter(Boolean)].slice(-24),
         items: data.items.map((item: { promptId: string; speech: string }) => {
           const prompt = promptById.get(item.promptId);
@@ -1177,7 +1201,12 @@ export default function Home() {
     if (!videoSpeechPreview) return;
     const groupPrompts = prompts.filter((prompt) => videoSpeechPreview.promptIds.includes(prompt.id));
     const currentSpeeches = videoSpeechPreview.items.map((item) => item.speech).filter(Boolean);
-    await generateVideoSpeechPreview(videoSpeechPreview.scriptGroup, groupPrompts, [...videoSpeechPreview.avoidSpeeches, ...currentSpeeches]);
+    await generateVideoSpeechPreview(
+      videoSpeechPreview.scriptGroup,
+      groupPrompts,
+      [...videoSpeechPreview.avoidSpeeches, ...currentSpeeches],
+      videoSpeechPreview.generationIndex + 1
+    );
   }
 
   async function applyVideoSpeechPreview() {
@@ -2470,7 +2499,10 @@ export default function Home() {
             <div className="panel-head">
               <div>
                 <h2>Prévia das falas</h2>
-                <span>{scriptGroupLabel(videoSpeechPreview.scriptGroup)} - revise antes de aplicar nos cards</span>
+                <span>
+                  {scriptGroupLabel(videoSpeechPreview.scriptGroup)} - revise antes de aplicar nos cards
+                  {videoSpeechPreview.strategy ? ` | Ângulo: ${videoSpeechPreview.strategy.name}` : ""}
+                </span>
               </div>
               <button className="ghost" onClick={() => setVideoSpeechPreview(null)}>
                 Fechar
